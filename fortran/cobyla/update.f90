@@ -111,7 +111,7 @@ if (jdrop <= n) then
     simi(jdrop, :) = simi_jdrop
 else  ! JDROP = N+1
     sim(:, n + 1) = sim(:, n + 1) + d
-    sim(:, 1:n) = sim(:, 1:n) - spread(d, dim=2, ncopies=n)
+    ! sim(:, 1:n) = sim(:, 1:n) - spread(d, dim=2, ncopies=n)
     simid = matprod(simi, d)
     sum_simi = sum(simi, dim=1)
     simi = simi + outprod(simid, sum_simi / (ONE - sum(simid)))
@@ -272,7 +272,7 @@ if (jopt >= 1 .and. jopt <= n) then
     sim(:, n + 1) = sim(:, n + 1) + sim(:, jopt)
     sim_jopt = sim(:, jopt)
     sim(:, jopt) = ZERO
-    sim(:, 1:n) = sim(:, 1:n) - spread(sim_jopt, dim=2, ncopies=n)
+    ! sim(:, 1:n) = sim(:, 1:n) - spread(sim_jopt, dim=2, ncopies=n)
     !!MATLAB: sim(:, 1:n) = sim(:, 1:n) - sim_jopt; % sim_jopt should be a column! Implicit expansion
     ! The above update is equivalent to multiply SIM(:, 1:N) from the right side by a matrix whose
     ! JOPT-th row is [-1, -1, ..., -1], while all the other rows are the same as those of the
@@ -386,7 +386,7 @@ phimin = minval(phi)
 ! Essentially, JOPT = MINLOC(PHI). However, we keep JOPT = N + 1 unless there is a strictly better
 ! choice. When there are multiple choices, we choose the JOPT with the smallest value of CVAL.
 if (phimin < phi(jopt) .or. any(cval < cval(jopt) .and. phi <= phi(jopt))) then
-    jopt = int(minloc(cval, mask=(phi <= phimin), dim=1), kind(jopt))
+    ! jopt = int(minloc(cval, mask=(phi <= phimin), dim=1), kind(jopt))
     !!MATLAB: cmin = min(cval(phi <= phimin)); jopt = find(phi <= phimin & cval <= cmin, 1, 'first');
 end if
 

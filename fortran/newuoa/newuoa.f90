@@ -168,7 +168,7 @@ use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH, EPS
 use, non_intrinsic :: debug_mod, only : assert, warning
-use, non_intrinsic :: evaluate_mod, only : moderatex
+! use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: memory_mod, only : safealloc
@@ -177,7 +177,7 @@ use, non_intrinsic :: preproc_mod, only : preproc
 use, non_intrinsic :: string_mod, only : num2str
 
 ! Solver-specific modules
-use, non_intrinsic :: newuob_mod, only : newuob
+! use, non_intrinsic :: newuob_mod, only : newuob
 
 implicit none
 
@@ -232,7 +232,7 @@ real(RP), allocatable :: xhist_loc(:, :)
 n = int(size(x), kind(n))
 
 ! Replace any NaN in X by ZERO and Inf/-Inf in X by REALMAX/-REALMAX.
-x = moderatex(x)
+! x = moderatex(x)
 
 ! Read the inputs.
 
@@ -337,13 +337,13 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 
 
 !-------------------- Call NEWUOB, which performs the real calculations. --------------------------!
-if (present(callback_fcn)) then
-    call newuob(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
-        & gamma2_loc, rhobeg_loc, rhoend_loc, x, nf_loc, f_loc, fhist_loc, xhist_loc, info_loc, callback_fcn)
-else
-    call newuob(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
-        & gamma2_loc, rhobeg_loc, rhoend_loc, x, nf_loc, f_loc, fhist_loc, xhist_loc, info_loc)
-end if
+! if (present(callback_fcn)) then
+!     call newuob(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
+!         & gamma2_loc, rhobeg_loc, rhoend_loc, x, nf_loc, f_loc, fhist_loc, xhist_loc, info_loc, callback_fcn)
+! else
+!     call newuob(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
+!         & gamma2_loc, rhobeg_loc, rhoend_loc, x, nf_loc, f_loc, fhist_loc, xhist_loc, info_loc)
+! end if
 !--------------------------------------------------------------------------------------------------!
 
 

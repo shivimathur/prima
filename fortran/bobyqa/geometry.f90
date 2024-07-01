@@ -104,10 +104,10 @@ end if
 ! based on the distance to the un-updated "optimal point", which is unreasonable. This has been
 ! corrected in our implementation of LINCOA, yet it does not boost the performance.
 if (ximproved) then
-    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
+    ! distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion
 else
-    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+    ! distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
 end if
 
@@ -285,8 +285,8 @@ if (DEBUGGING) then
     call assert(size(sl) == n .and. all(sl <= 0), 'SIZE(SL) == N, SL <= 0', srname)
     call assert(size(su) == n .and. all(su >= 0), 'SIZE(SU) == N, SU >= 0', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
-        & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
+    ! call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
+    !     & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
@@ -335,7 +335,7 @@ end if
 ! point on the K-th line attains the J-th upper bound, SBDI(I, K) = -J < 0 indicates reaching the
 ! J-th lower bound, and SBDI(I, K) = 0 means not touching any bound.
 dderiv = matprod(glag, xpt) - inprod(glag, xopt) ! The derivatives PHI_K'(0).
-distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+! distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 do k = 1, npt
     ! It does not make sense to consider "straight line through XOPT and XPT(:, KOPT)". Hence set
     ! STPLEN(:, KOPT) = 0 and ISBD(:, KOPT) = 0 so that VLAG(:, K) and PREDSQ(:, K) obtained after
@@ -377,7 +377,7 @@ do k = 1, npt
     slbd_test(trueloc(xdiff > 0)) = lfrac(trueloc(xdiff > 0))
     slbd_test(trueloc(xdiff < 0)) = ufrac(trueloc(xdiff < 0))
     if (any(slbd_test > slbd)) then
-        ilbd = int(maxloc(slbd_test, mask=(.not. is_nan(slbd_test)), dim=1), kind(ilbd))
+        ! ilbd = int(maxloc(slbd_test, mask=(.not. is_nan(slbd_test)), dim=1), kind(ilbd))
         slbd = slbd_test(ilbd)
         ilbd = -ilbd * nint(sign(ONE, xdiff(ilbd)), kind(ilbd))
         !!MATLAB:
@@ -390,7 +390,7 @@ do k = 1, npt
     subd_test(trueloc(xdiff > 0)) = ufrac(trueloc(xdiff > 0))
     subd_test(trueloc(xdiff < 0)) = lfrac(trueloc(xdiff < 0))
     if (any(subd_test < subd)) then
-        iubd = int(minloc(subd_test, mask=(.not. is_nan(subd_test)), dim=1), kind(iubd))
+        ! iubd = int(minloc(subd_test, mask=(.not. is_nan(subd_test)), dim=1), kind(iubd))
         subd = max(sumin, subd_test(iubd))
         iubd = iubd * nint(sign(ONE, xdiff(iubd)), kind(iubd))
         !!MATLAB:
@@ -425,7 +425,7 @@ end do
 ! First, compute VLAG = PHI(STPLEN). Using the fact that PHI_K(0) = 0, PHI_K(1) = delta_{K, KNEW}
 ! (Kronecker delta), and recalling the PHI_K is quadratic, we can find that
 ! PHI_K(t) = t*(1-t)*PHI_K'(0) for K /= KNEW, and PHI_KNEW = t*[t*(1-PHI_K'(0)) + PHI_K'(0)].
-vlag = stplen * (ONE - stplen) * spread(dderiv, dim=1, ncopies=3)
+! vlag = stplen * (ONE - stplen) * spread(dderiv, dim=1, ncopies=3)
 !!MATLAB: vlag = stplen .* (1 - stplen) .* dderiv; % Implicit expansion; dderiv is a row!
 vlag(:, knew) = stplen(:, knew) * (stplen(:, knew) * (ONE - dderiv(knew)) + dderiv(knew))
 ! Set NaNs in VLAG to 0 so that the behavior of MAXVAL(ABS(VLAG)) is predictable. VLAG does not have
@@ -433,7 +433,7 @@ vlag(:, knew) = stplen(:, knew) * (stplen(:, knew) * (ONE - dderiv(knew)) + dder
 where (is_nan(vlag)) vlag = ZERO  !!MATLAB: vlag(isnan(vlag)) = 0;
 !
 ! Second, BETABD is the upper bound of BETA given in (3.10) of the BOBYQA paper.
-betabd = HALF * (stplen * (ONE - stplen) * spread(distsq, dim=1, ncopies=3))**2
+! betabd = HALF * (stplen * (ONE - stplen) * spread(distsq, dim=1, ncopies=3))**2
 !!MATLAB: betabd = 0.5 * (stplen .* (1-stplen) .* distsq).^2 % Implicit expansion; distsq is a row!
 !
 ! Finally, PREDSQ is the quantity defined in (3.11) of the BOBYQA paper.

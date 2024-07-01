@@ -92,7 +92,7 @@ if (all(is_nan(fgrid))) then
     return
 end if
 
-kopt = int(minloc(fgrid, mask=(.not. is_nan(fgrid)), dim=1), IK)
+! kopt = int(minloc(fgrid, mask=(.not. is_nan(fgrid)), dim=1), IK)
 fopt = fgrid(kopt)
 !!MATLAB: [fopt, kopt] = min(fgrid, [], 'omitnan');
 fprev = fgrid(modulo(kopt - 2_IK, grid_size) + 1)  ! Corresponds to KOPT - 1
@@ -179,7 +179,7 @@ if (all(is_nan(fgrid))) then
     return
 end if
 
-kopt = int(maxloc(abs(fgrid), mask=(.not. is_nan(fgrid)), dim=1), IK)
+! kopt = int(maxloc(abs(fgrid), mask=(.not. is_nan(fgrid)), dim=1), IK)
 !!MATLAB: [~, kopt] = max(abs(fgrid), [], 'omitnan');
 fopt = fgrid(kopt)
 fprev = fgrid(modulo(kopt - 2_IK, grid_size) + 1)  ! Corresponds to KOPT - 1
@@ -267,7 +267,7 @@ if (all(is_nan(fgrid))) then
     return
 end if
 
-kopt = int(maxloc(fgrid, mask=(.not. is_nan(fgrid)), dim=1), IK)
+! kopt = int(maxloc(fgrid, mask=(.not. is_nan(fgrid)), dim=1), IK)
 fopt = fgrid(kopt)
 !!MATLAB: [fopt, kopt] = min(fgrid, [], 'omitnan');
 

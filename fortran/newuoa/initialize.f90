@@ -46,7 +46,7 @@ subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, x0, ij, kopt, nf, fhi
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: evaluate_mod, only : evaluate
+! use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_posinf
 use, non_intrinsic :: infos_mod, only : INFO_DFT
@@ -150,7 +150,7 @@ xpt(:, n + 2:npt) = -rhobeg * eye(n, npt - n - 1_IK)
 ! Set FVAL(1 : min(2*N + 1, NPT)) by evaluating F. Totally parallelizable except for FMSG.
 do k = 1, min(npt, 2_IK * n + 1_IK)
     x = xpt(:, k) + xbase
-    call evaluate(calfun, x, f)
+    ! call evaluate(calfun, x, f)
 
     ! Print a message about the function evaluation according to IPRINT.
     call fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x)
@@ -189,20 +189,30 @@ ij = setij(n, npt)
 ! on FVAL(2 : 2*N + 1), and it is the sole origin of the such dependency. If we remove the revision
 ! IJ, then the evaluations of FVAL(1 : NPT) can be merged, and they are totally PARALLELIZABLE; this
 ! can be beneficial if the function evaluations are expensive, which is likely the case.
-where (fval(ij(1, :) + n + 1) < fval(ij(1, :) + 1)) ij(1, :) = ij(1, :) + n
-where (fval(ij(2, :) + n + 1) < fval(ij(2, :) + 1)) ij(2, :) = ij(2, :) + n
+! where (fval(ij(1, :) + n + 1) < fval(ij(1, :) + 1)) ij(1, :) = ij(1, :) + n
+! where (fval(ij(2, :) + n + 1) < fval(ij(2, :) + 1)) ij(2, :) = ij(2, :) + n
+do k = 1, size(ij, 2)
+    if (fval(ij(1, k) + n + 1) < fval(ij(1, k) + 1)) then
+        ij(1, k) = ij(1, k) + n
+    end if
+end do
+do k = 1, size(ij, 2)
+    if (fval(ij(2, k) + n + 1) < fval(ij(2, k) + 1)) then
+        ij(2, k) = ij(2, k) + n
+    end if
+end do
 ! MATLAB (but not Fortran) can index a vector by a 2D array of indices, thus the MATLAB code is
 !!MATLAB: ij(fval(ij + n + 1) < fval(ij + 1)) = ij(fval(ij + n  + 1) < fval(ij + 1)) + n;
 
 ! Set XPT(:, 2*N + 2 : NPT). It depends on IJ and hence on FVAL(2 : 2*N + 1). Indeed, XPT(:, K) has
 ! only two nonzeros for each K >= 2*N+2.
-xpt(:, 2 * n + 2:npt) = xpt(:, ij(1, :) + 1) + xpt(:, ij(2, :) + 1)
+! xpt(:, 2 * n + 2:npt) = xpt(:, ij(1, :) + 1) + xpt(:, ij(2, :) + 1)
 
 ! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable except for FMSG.
 if (info == INFO_DFT) then
     do k = 2_IK * n + 2_IK, npt
         x = xpt(:, k) + xbase
-        call evaluate(calfun, x, f)
+        ! call evaluate(calfun, x, f)
 
         ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x)
@@ -223,7 +233,7 @@ end if
 
 ! Set NF, KOPT
 nf = int(count(evaluated), kind(nf))  !!MATLAB: nf = sum(evaluated);
-kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
+! kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
 !!MATLAB: fopt = min(fval(evaluated)); kopt = find(evaluated & ~(fval > fopt), 1, 'first')
 
 !====================!

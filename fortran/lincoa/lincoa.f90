@@ -227,7 +227,7 @@ use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH, EPS, BOUNDMAX
 use, non_intrinsic :: debug_mod, only : assert, warning
-use, non_intrinsic :: evaluate_mod, only : moderatex
+! use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: linalg_mod, only : trueloc
@@ -238,7 +238,7 @@ use, non_intrinsic :: selectx_mod, only : isbetter
 use, non_intrinsic :: string_mod, only : num2str
 
 ! Solver-specific modules
-use, non_intrinsic :: lincob_mod, only : lincob
+! use, non_intrinsic :: lincob_mod, only : lincob
 
 implicit none
 
@@ -354,7 +354,7 @@ end if
 
 ! Read the inputs
 
-x = moderatex(x)
+! x = moderatex(x)
 
 call safealloc(Aineq_loc, mineq, n)  ! NOT removable even in F2003, as Aineq may be absent or of size 0-by-0.
 if (present(Aineq) .and. mineq > 0) then
@@ -520,17 +520,17 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 call get_lincon(Aeq_loc, Aineq_loc, beq_loc, bineq_loc, rhoend_loc, xl_loc, xu_loc, x, amat, bvec)
 
 !-------------------- Call LINCOB, which performs the real calculations. --------------------------!
-if (present(callback_fcn)) then
-    call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, Aeq_loc, Aineq_loc, amat, &
-        & beq_loc, bineq_loc, bvec, ctol_loc, cweight_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
-        & gamma2_loc, rhobeg_loc, rhoend_loc, xl_loc, xu_loc, x, nf_loc, chist_loc, cstrv_loc, &
-        & f_loc, fhist_loc, xhist_loc, info_loc, callback_fcn)
-else
-    call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, Aeq_loc, Aineq_loc, amat, &
-        & beq_loc, bineq_loc, bvec, ctol_loc, cweight_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
-        & gamma2_loc, rhobeg_loc, rhoend_loc, xl_loc, xu_loc, x, nf_loc, chist_loc, cstrv_loc, &
-        & f_loc, fhist_loc, xhist_loc, info_loc)
-end if
+! if (present(callback_fcn)) then
+!     call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, Aeq_loc, Aineq_loc, amat, &
+!         & beq_loc, bineq_loc, bvec, ctol_loc, cweight_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
+!         & gamma2_loc, rhobeg_loc, rhoend_loc, xl_loc, xu_loc, x, nf_loc, chist_loc, cstrv_loc, &
+!         & f_loc, fhist_loc, xhist_loc, info_loc, callback_fcn)
+! else
+!     call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, Aeq_loc, Aineq_loc, amat, &
+!         & beq_loc, bineq_loc, bvec, ctol_loc, cweight_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
+!         & gamma2_loc, rhobeg_loc, rhoend_loc, xl_loc, xu_loc, x, nf_loc, chist_loc, cstrv_loc, &
+!         & f_loc, fhist_loc, xhist_loc, info_loc)
+! end if
 !--------------------------------------------------------------------------------------------------!
 
 ! Deallocate variables not needed any more. We prefer explicit deallocation to the automatic one.
@@ -740,8 +740,8 @@ iineq = trueloc(Aineq_norm > 0)
 ! 1. The treatment of the equality constraints is naive. One may choose to eliminate them instead.
 ! 2. The code below is quite inefficient in terms of memory, but we prefer readability.
 idmat = eye(n, n)
-amat = reshape(shape=shape(amat), source= &
-    & [-idmat(:, ixl), idmat(:, ixu), -transpose(Aeq(ieq, :)), transpose(Aeq(ieq, :)), transpose(Aineq(iineq, :))])
+! amat = reshape(shape=shape(amat), source= &
+!     & [-idmat(:, ixl), idmat(:, ixu), -transpose(Aeq(ieq, :)), transpose(Aeq(ieq, :)), transpose(Aineq(iineq, :))])
 bvec = [-xl(ixl), xu(ixu), -beq(ieq), beq(ieq), bineq(iineq)]
 !!MATLAB code:
 !!amat = [-idmat(:, ixl), idmat(:, ixu), -Aeq(ieq, :)', Aeq(ieq, :)', Aineq(iineq, :)'];
@@ -750,11 +750,11 @@ bvec = [-xl(ixl), xu(ixu), -beq(ieq), beq(ieq), bineq(iineq)]
 ! Modify BVEC if necessary so that the initial point is feasible.
 Aeqx0 = matprod(Aeq, x0)
 Aineqx0 = matprod(Aineq, x0)
-bvec = max(bvec, [-x0(ixl), x0(ixu), -Aeqx0(ieq), Aeqx0(ieq), Aineqx0(iineq)])
+! bvec = max(bvec, [-x0(ixl), x0(ixu), -Aeqx0(ieq), Aeqx0(ieq), Aineqx0(iineq)])
 
 ! Normalize the linear constraints so that each constraint has a gradient of norm 1.
 Anorm = [Aeq_norm(ieq), Aeq_norm(ieq), Aineq_norm(iineq)]
-amat(:, mxl + mxu + 1:m) = amat(:, mxl + mxu + 1:m) / spread(Anorm, dim=1, ncopies=n)
+! amat(:, mxl + mxu + 1:m) = amat(:, mxl + mxu + 1:m) / spread(Anorm, dim=1, ncopies=n)
 bvec(mxl + mxu + 1:m) = bvec(mxl + mxu + 1:m) / Anorm
 
 ! Deallocate memory.

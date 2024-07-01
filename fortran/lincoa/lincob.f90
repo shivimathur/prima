@@ -75,7 +75,7 @@ subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, Aeq, Aineq, amat, beq, b
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, REALMAX, BOUNDMAX, MIN_MAXFILT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: evaluate_mod, only : evaluate
+! use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, CALLBACK_TERMINATE, NAN_INF_MODEL
@@ -87,11 +87,11 @@ use, non_intrinsic :: powalg_mod, only : quadinc, omega_mul, hess_mul, updateh
 use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: redrho_mod, only : redrho
 use, non_intrinsic :: selectx_mod, only : savefilt, selectx, isbetter
-use, non_intrinsic :: shiftbase_mod, only : shiftbase
+! use, non_intrinsic :: shiftbase_mod, only : shiftbase
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_lincoa_mod, only : geostep, setdrop_tr
-use, non_intrinsic :: initialize_lincoa_mod, only : initxf, inith
+! use, non_intrinsic :: initialize_lincoa_mod, only : initxf, inith
 use, non_intrinsic :: trustregion_lincoa_mod, only : trstep, trrad
 use, non_intrinsic :: update_lincoa_mod, only : updatexf, updateq, tryqalt, updateres
 
@@ -157,6 +157,7 @@ integer(IK) :: ngetact
 integer(IK) :: nhist
 integer(IK) :: subinfo
 integer(IK) :: tr
+integer(IK) :: nrec
 integer(IK), allocatable :: ixl(:)
 integer(IK), allocatable :: ixu(:)
 logical :: accurate_mod
@@ -208,6 +209,7 @@ real(RP) :: xosav(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 real(RP), parameter :: trtol = 1.0E-2_RP  ! Convergence tolerance of trust-region subproblem solver
+real(RP), dimension(:), allocatable :: new_dnorm_rec
 
 ! Sizes.
 m = int(size(bvec), kind(m))
@@ -216,6 +218,7 @@ maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
 maxchist = int(size(chist), kind(maxchist))
 maxhist = int(max(maxxhist, maxfhist, maxchist), kind(maxhist))
+nrec = size(dnorm_rec)
 
 ! Preconditions
 if (DEBUGGING) then
@@ -253,13 +256,13 @@ ixu = trueloc(xu < BOUNDMAX)
 
 ! Initialize B, XBASE, XPT, FVAL, CVAL, and KOPT, together with the history, NF, IJ, and EVALUATED.
 b = bvec
-call initxf(calfun, iprint, maxfun, Aeq, Aineq, amat, beq, bineq, ctol, ftarget, rhobeg, xl, xu, &
-    & x, b, ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, subinfo)
+! call initxf(calfun, iprint, maxfun, Aeq, Aineq, amat, beq, bineq, ctol, ftarget, rhobeg, xl, xu, &
+!     & x, b, ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, subinfo)
 
 ! Report the current best value, and check if user asks for early termination.
 terminate = .false.
 if (present(callback_fcn)) then
-    call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0_IK, cval(kopt), terminate=terminate)
+    ! call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0_IK, cval(kopt), terminate=terminate)
     if (terminate) then
         subinfo = CALLBACK_TERMINATE
     end if
@@ -291,13 +294,13 @@ end do
 ! otherwise, do not proceed, as XPT etc may be uninitialized, leading to errors or exceptions.
 if (subinfo == INFO_DFT) then
     ! Initialize [BMAT, ZMAT, IDZ], representing inverse of KKT matrix of the interpolation system.
-    call inith(ij, xpt, idz, bmat, zmat)
+    ! call inith(ij, xpt, idz, bmat, zmat)
 
     ! Initialize the quadratic represented by [GOPT, HQ, PQ], so that its gradient at XBASE+XOPT is
     ! GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
     hq = ZERO
     pq = omega_mul(idz, zmat, fval)
-    gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xpt(:, kopt), xpt, pq)
+    ! gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xpt(:, kopt), xpt, pq)
     pqalt = pq
     galt = gopt
     if (.not. (all(is_finite(gopt)) .and. all(is_finite(hq)) .and. all(is_finite(pq)))) then
@@ -313,7 +316,7 @@ if (subinfo /= INFO_DFT) then
     kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
     x = xfilt(:, kopt)
     f = ffilt(kopt)
-    constr_leq = matprod(Aeq, x) - beq
+    ! constr_leq = matprod(Aeq, x) - beq
     constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), -constr_leq, constr_leq, matprod(Aineq, x) - bineq]
     cstrv = maximum([ZERO, constr])
     call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
@@ -341,7 +344,7 @@ if (subinfo /= INFO_DFT) then
 end if
 
 ! Initialize RESCON.
-rescon = max(b - matprod(xpt(:, kopt), amat), ZERO)
+! rescon = max(b - matprod(xpt(:, kopt), amat), ZERO)
 rescon(trueloc(rescon >= rhobeg)) = -rescon(trueloc(rescon >= rhobeg))
 !!MATLAB: rescon(rescon >= rhobeg) = -rescon(rescon >= rhobeg)
 
@@ -416,7 +419,11 @@ do tr = 1, maxtr
     ! DNORM_REC records the DNORM of recent trust-region iterations. It will be used to decide
     ! whether we should improve the geometry of the interpolation set or reduce RHO when SHORTD
     ! is TRUE. Note that it does not record the geometry steps.
-    dnorm_rec = [dnorm_rec(2:size(dnorm_rec)), dnorm]
+    ! dnorm_rec = [dnorm_rec(2:size(dnorm_rec)), dnorm]
+    allocate(new_dnorm_rec(nrec))
+    new_dnorm_rec(1:nrec-1) = dnorm_rec(2:nrec)
+    new_dnorm_rec(nrec) = dnorm
+    dnorm_rec = new_dnorm_rec
 
     ! In some cases, we reset DNORM_REC to REALMAX. This indicates a preference of improving the
     ! geometry of the interpolation set to reducing RHO in the subsequent three or more iterations.
@@ -446,7 +453,7 @@ do tr = 1, maxtr
     else
         ! Calculate the next value of the objective function.
         x = xbase + (xpt(:, kopt) + d)
-        call evaluate(calfun, x, f)
+        ! call evaluate(calfun, x, f)
         nf = nf + 1_IK
 
         ! Evaluate the constraints. They are used only for printing messages.
@@ -474,7 +481,7 @@ do tr = 1, maxtr
         ! reasonable if the two values being compared are both ZERO or INF.
         moderr = f - fval(kopt) + qred
         moderr_alt = f - fval(kopt) - quadinc(d, xpt, galt, pqalt)
-        qalt_better = [qalt_better(2:size(qalt_better)), abs(moderr_alt) < TENTH * abs(moderr)]
+        ! qalt_better = [qalt_better(2:size(qalt_better)), abs(moderr_alt) < TENTH * abs(moderr)]
 
         ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
         ratio = redrat(fval(kopt) - f, qred, eta1)
@@ -538,7 +545,7 @@ do tr = 1, maxtr
     ! Powell's version (note that size(dnorm_rec) = 5 in his implementation):
     !accurate_mod = all(dnorm_rec <= HALF * rho) .or. all(dnorm_rec(3:size(dnorm_rec)) <= TENTH * rho)
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
-    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+    ! distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
     close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Powell's NEWUOA code.
     ! Below are some alternative definitions of CLOSE_ITPSET.
@@ -603,7 +610,7 @@ do tr = 1, maxtr
 
         ! Calculate the next value of the objective function.
         x = xbase + (xpt(:, kopt) + d)
-        call evaluate(calfun, x, f)
+        ! call evaluate(calfun, x, f)
         nf = nf + 1_IK
 
         ! Evaluate the constraints. They are used only for printing messages.
@@ -632,7 +639,7 @@ do tr = 1, maxtr
         ! reasonable if the two values being compared are both ZERO or INF.
         moderr = f - fval(kopt) - quadinc(d, xpt, gopt, pq, hq)
         moderr_alt = f - fval(kopt) - quadinc(d, xpt, galt, pqalt)
-        qalt_better = [qalt_better(2:size(qalt_better)), abs(moderr_alt) < TENTH * abs(moderr)]
+        ! qalt_better = [qalt_better(2:size(qalt_better)), abs(moderr_alt) < TENTH * abs(moderr)]
 
         ! Is the newly generated X better than current best point?
         ximproved = (f < fval(kopt) .and. feasible)
@@ -679,19 +686,19 @@ do tr = 1, maxtr
     ! Shift XBASE if XOPT may be too far from XBASE.
     ! Powell's original criterion for shifting XBASE: before a trust region step or a geometry step,
     ! shift XBASE if SUM(XOPT**2) >= 1.0E3*DELTA**2.
-    if (sum(xpt(:, kopt)**2) >= 1.0E3_RP * delta**2) then
-        ! Other possible criteria: SUM(XOPT**2) >= 1.0E4*DELTA**2, SUM(XOPT**2) >= 1.0E3*RHO**2.
-        b = b - matprod(xpt(:, kopt), amat)
-        call shiftbase(kopt, xbase, xpt, zmat, bmat, pq, hq, idz)
-        ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
-        pqalt = omega_mul(idz, zmat, fval - fval(kopt))
-        galt = matprod(bmat(:, 1:npt), fval - fval(kopt)) + hess_mul(xpt(:, kopt), xpt, pqalt)
-    end if
+    ! if (sum(xpt(:, kopt)**2) >= 1.0E3_RP * delta**2) then
+    !     ! Other possible criteria: SUM(XOPT**2) >= 1.0E4*DELTA**2, SUM(XOPT**2) >= 1.0E3*RHO**2.
+    !     b = b - matprod(xpt(:, kopt), amat)
+    !     call shiftbase(kopt, xbase, xpt, zmat, bmat, pq, hq, idz)
+    !     ! SHIFTBASE shifts XBASE to XBASE + XOPT and XOPT to 0.
+    !     ! pqalt = omega_mul(idz, zmat, fval - fval(kopt))
+    !     galt = matprod(bmat(:, 1:npt), fval - fval(kopt)) + hess_mul(xpt(:, kopt), xpt, pqalt)
+    ! end if
 
     ! Report the current best value, and check if user asks for early termination.
     if (present(callback_fcn)) then
         ! FIXME: CVAL(KOP) is WRONG! CVAL is not updated.
-        call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, cval(kopt), terminate=terminate)
+        ! call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, cval(kopt), terminate=terminate)
         if (terminate) then
             info = CALLBACK_TERMINATE
             exit
@@ -703,7 +710,7 @@ end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried yet.
 if (info == SMALL_TR_RADIUS .and. shortd .and. dnorm > TENTH * rhoend .and. nf < maxfun) then
     x = xbase + (xpt(:, kopt) + d)
-    call evaluate(calfun, x, f)
+    ! call evaluate(calfun, x, f)
     nf = nf + 1_IK
     constr_leq = matprod(Aeq, x) - beq
     constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), -constr_leq, constr_leq, matprod(Aineq, x) - bineq]

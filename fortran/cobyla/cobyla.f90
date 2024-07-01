@@ -265,7 +265,7 @@ use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HALF, TEN, TENTH, EPS, BOUNDMAX
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
-use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex, moderatec, moderatef
+! use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex, moderatec, moderatef
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: infos_mod, only : INVALID_INPUT
@@ -277,7 +277,7 @@ use, non_intrinsic :: preproc_mod, only : preproc
 use, non_intrinsic :: string_mod, only : num2str
 
 ! Solver-specific modules
-use, non_intrinsic :: cobylb_mod, only : cobylb
+! use, non_intrinsic :: cobylb_mod, only : cobylb
 
 implicit none
 
@@ -499,13 +499,13 @@ call safealloc(constr_loc, m)  ! NOT removable even in F2003!
 ! If NLCONSTR0 is present, then F0 must be present, and we assume that F(X0) = F0 even if F0 is NaN.
 ! If NLCONSTR0 is absent, then F0 must be either absent or NaN, both of which will be interpreted as
 ! F(X0) is not provided and we have to evaluate F(X0) and NLCONSTR(X0) now.
-constr_loc(1:m - m_nlcon) = moderatec(matprod(x, amat) - bvec)
+! constr_loc(1:m - m_nlcon) = moderatec(matprod(x, amat) - bvec)
 if (present(f0) .and. present(nlconstr0) .and. all(is_finite(x))) then
-    f_loc = moderatef(f0)
-    constr_loc(m - m_nlcon + 1:m) = moderatec(nlconstr0)
+    ! f_loc = moderatef(f0)
+    ! constr_loc(m - m_nlcon + 1:m) = moderatec(nlconstr0)
 else
-    x = moderatex(x)
-    call evaluate(calcfc, x, f_loc, constr_loc(m - m_nlcon + 1:m))
+    ! x = moderatex(x)
+    ! call evaluate(calcfc, x, f_loc, constr_loc(m - m_nlcon + 1:m))
     ! N.B.: Do NOT call FMSG, SAVEHIST, or SAVEFILT for the function/constraint evaluation at X0.
     ! They will be called during the initialization, which will read the function/constraint at X0.
 end if
@@ -624,15 +624,15 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 
 
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
-if (present(callback_fcn)) then
-    call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, amat, bvec, ctol_loc, cweight_loc, &
-        & eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, constr_loc, &
-        & f_loc, x, nf_loc, chist_loc, conhist_loc, cstrv_loc, fhist_loc, xhist_loc, info_loc, callback_fcn)
-else
-    call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, amat, bvec, ctol_loc, cweight_loc, &
-    & eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, constr_loc, &
-    & f_loc, x, nf_loc, chist_loc, conhist_loc, cstrv_loc, fhist_loc, xhist_loc, info_loc)
-end if
+! if (present(callback_fcn)) then
+!     call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, amat, bvec, ctol_loc, cweight_loc, &
+!         & eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, constr_loc, &
+!         & f_loc, x, nf_loc, chist_loc, conhist_loc, cstrv_loc, fhist_loc, xhist_loc, info_loc, callback_fcn)
+! else
+!     call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, amat, bvec, ctol_loc, cweight_loc, &
+!     & eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, constr_loc, &
+!     & f_loc, x, nf_loc, chist_loc, conhist_loc, cstrv_loc, fhist_loc, xhist_loc, info_loc)
+! end if
 !--------------------------------------------------------------------------------------------------!
 
 ! Deallocate variables not needed any more. We prefer explicit deallocation to the automatic one.
@@ -840,8 +840,8 @@ ixu = trueloc(xu < BOUNDMAX)
 ! 1. The treatment of the equality constraints is naive. One may choose to eliminate them instead.
 ! 2. The code below is quite inefficient in terms of memory, but we prefer readability.
 idmat = eye(n, n)
-amat = reshape(shape=shape(amat), source= &
-    & [-idmat(:, ixl), idmat(:, ixu), -transpose(Aeq), transpose(Aeq), transpose(Aineq)])
+amat = reshape([-idmat(:, ixl), idmat(:, ixu), -transpose(Aeq), &
+                transpose(Aeq), transpose(Aineq)], shape(amat))
 bvec = [-xl(ixl), xu(ixu), -beq, beq, bineq]
 !!MATLAB code:
 !!amat = [-idmat(:, ixl), idmat(:, ixu), -Aeq', Aeq', Aineq'];

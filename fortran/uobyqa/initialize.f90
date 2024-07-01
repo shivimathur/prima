@@ -30,7 +30,7 @@ subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, x0, kopt, nf, fhist, 
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: evaluate_mod, only : evaluate
+! use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
 use, non_intrinsic :: infos_mod, only : INFO_DFT
@@ -71,10 +71,12 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: subinfo
+integer(IK) :: i, j
 logical :: evaluated(size(xpt, 2))
 real(RP) :: f
 real(RP) :: x(size(x0))
 real(RP) :: xw(size(x0))
+real(RP), dimension(:, :), allocatable:: eye_matrix
 
 ! Sizes
 n = int(size(xpt, 1), kind(n))
@@ -127,10 +129,19 @@ fval = REALMAX
 ! Set XPT(:, 1 : 2*N+1) and FVAL(:, 1 : 2*N+1).
 xpt = ZERO
 kk = linspace(2_IK, 2_IK * n, n)
-xpt(:, kk) = rhobeg * eye(n)
+! xpt(:, kk) = rhobeg * eye(n)
+allocate(eye_matrix(n, n))
+eye_matrix = 0.0
+do i = 1, n
+    eye_matrix(i, i) = 1.0
+end do
+
+do j = 1, n
+    xpt(:, j) = rhobeg * eye_matrix(:, j)
+end do
 do k = 1, 2_IK * n + 1_IK
     x = xpt(:, k) + xbase
-    call evaluate(calfun, x, f)
+    ! call evaluate(calfun, x, f)
 
     ! Print a message about the function evaluation according to IPRINT.
     call fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x)
@@ -179,7 +190,7 @@ if (info == INFO_DFT) then
         end if
         xpt([ip, iq], k) = xw([ip, iq])
         x = xpt(:, k) + xbase
-        call evaluate(calfun, x, f)
+        ! call evaluate(calfun, x, f)
 
         ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x)
@@ -199,7 +210,7 @@ if (info == INFO_DFT) then
 end if
 
 nf = int(count(evaluated), kind(nf))  !!MATLAB: nf = sum(evaluated);
-kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
+! kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
 !!MATLAB: fopt = min(fval(evaluated)); kopt = find(evaluated & ~(fval > fopt), 1, 'first')
 
 !====================!

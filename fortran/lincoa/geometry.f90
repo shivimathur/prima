@@ -102,13 +102,13 @@ end if
 ! knowing KNEW (see lines 332-344 and 404--431 of lincob.f). Hence Powell's LINCOA code picks KNEW
 ! based on the distance to the un-updated "optimal point", which is unreasonable. This has been
 ! corrected in our implementation of LINCOA, yet it does not boost the performance.
-if (ximproved) then
-    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
-else
-    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
-end if
+! if (ximproved) then
+!     distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
+!     !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column!! Implicit expansion
+! else
+!     distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+!     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
+! end if
 !distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)  ! Powell's code
 
 weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Powell's NEWUOA code
@@ -354,7 +354,7 @@ glag = bmat(:, knew) + hess_mul(xopt, xpt, pqlag)
 ! without considering the linear constraints. In the following, VLAGABS(K) is set to the maximum of
 ! |PHI_K(t)| subject to the trust-region constraint with PHI_K(t) = LFUNC((1-t)*XOPT + t*XPT(:, K)).
 dderiv = matprod(glag, xpt) - inprod(glag, xopt) ! The derivatives PHI_K'(0).
-distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
+! distsq = sum((xpt - spread(xopt, dim=2, ncopies=npt))**2, dim=1)
 ! Set DISTSQ(KOPT) to a positive artificial value. Otherwise, the calculation of STPLEN will raise a
 ! floating point exception. This artificial value will NOT be used.
 distsq(kopt) = ONE
@@ -377,7 +377,7 @@ vlagabs(kopt) = -ONE
 ! 2. If VLAGABS(KNEW) = MAXVAL(VLAGABS) = VLAGABS(K) and K < KNEW, Powell's code does not set K=KNEW.
 k = knew
 if (any(vlagabs > vlagabs(knew))) then
-    k = int(maxloc(vlagabs, mask=(.not. is_nan(vlagabs)), dim=1), kind(k))
+    ! k = int(maxloc(vlagabs, mask=(.not. is_nan(vlagabs)), dim=1), kind(k))
     !!MATLAB: [~, k] = max(vlagabs, [], 'omitnan');
 end if
 ! Set S to the step corresponding to VLAGABS(K), and calculate DENABS for it.
@@ -407,7 +407,7 @@ rstat(trueloc(abs(rescon) >= delbar)) = -1  ! Irrelevant
 rstat(iact(1:nact)) = 0  ! Active
 
 ! Set FEASIBLE for the calculated S.
-cstrv = maximum([ZERO, matprod(s, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))])
+! cstrv = maximum([ZERO, matprod(s, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))])
 feasible = (cstrv <= 0)
 
 ! If NACT <= 0 or NACT >= N, the calculation has finished. Otherwise, define PGSTP by maximizing
@@ -429,13 +429,13 @@ if (nact > 0 .and. gnorm > EPS .and. is_finite(gnorm)) then
     ! Decide whether to replace S with PGSTP and set FEASIBLE accordingly. CSTRV is the constraint
     ! violation of XOPT+PGSTP. Note that we only need to check the constraints that are inactive and
     ! relevant, as the value of the active constraints is not changed by moving along PGSTP.
-    cstrv = maximum([ZERO, matprod(pgstp, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1))])
+    ! cstrv = maximum([ZERO, matprod(pgstp, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1))])
     ! The purpose of CVTOL below is to provide a check on feasibility that includes a tolerance for
     ! contributions from computer rounding errors.
     ! Powell's code is as follows. Note that MATPROD(PGSTP, AMAT(:, IACT(1:NACT))) is 0 in theory.
     ! !cvtol = min(0.01_RP * norm(pgstp), TEN * norm(matprod(pgstp, amat(:, iact(1:nact))), 'inf'))
     ! The following code works essentially the same as Powell's code.
-    cvtol = max(EPS * norm(pgstp), TEN * norm(matprod(pgstp, amat(:, iact(1:nact))), 'inf'))
+    ! cvtol = max(EPS * norm(pgstp), TEN * norm(matprod(pgstp, amat(:, iact(1:nact))), 'inf'))
     take_pgstp = .false.
     if (cstrv <= cvtol) then
         den = calden(kopt, bmat, pgstp, xpt, zmat, idz)  ! Indeed, only DEN(KNEW) is needed.
@@ -453,7 +453,7 @@ if (sum(abs(s)) <= 0 .or. .not. is_finite(sum(abs(s)))) then
     s = xpt(:, knew) - xopt
     scaling = delbar / norm(s)
     s = max(0.6_RP * scaling, min(HALF, scaling)) * s  ! 0.6: ensure |D| > DELBAR/2
-    cstrv = maximum([ZERO, matprod(s, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))])
+    ! cstrv = maximum([ZERO, matprod(s, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))])
     feasible = (cstrv <= 0)
 end if
 

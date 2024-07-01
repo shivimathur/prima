@@ -16,6 +16,7 @@ module memory_mod
 ! Last Modified: Wednesday, February 28, 2024 AM12:20:23
 !--------------------------------------------------------------------------------------------------!
 
+use iso_c_binding, only: c_sizeof
 implicit none
 private
 public :: cstyle_sizeof
@@ -62,7 +63,8 @@ integer(IK) :: y
 
 ! We prefer STORAGE_SIZE to C_SIZEOF, because the former is intrinsic while the later requires the
 ! intrinsic module ISO_C_BINDING.
-y = int(storage_size(x) / 8, kind(y))  ! Y = INT(C_SIZEOF(X), KIND(Y))
+! y = int(storage_size(x) / 8, kind(y))  ! Y = INT(C_SIZEOF(X), KIND(Y))
+y = int(c_sizeof(x), kind(y)) / 8
 end function size_of_sp
 
 
@@ -77,7 +79,8 @@ real(DP), intent(in) :: x
 ! Outputs
 integer(IK) :: y
 
-y = int(storage_size(x) / 8, kind(y))
+! y = int(storage_size(x) / 8, kind(y))
+y = int(c_sizeof(x), kind(y)) / 8
 end function size_of_dp
 
 
@@ -94,7 +97,8 @@ real(HP), intent(in) :: x
 ! Outputs
 integer(IK) :: y
 
-y = int(storage_size(x) / 8, kind(y))
+! y = int(storage_size(x) / 8, kind(y))
+y = int(c_sizeof(x), kind(y)) / 8
 end function size_of_hp
 
 #endif
@@ -113,7 +117,8 @@ real(QP), intent(in) :: x
 ! Outputs
 integer(IK) :: y
 
-y = int(storage_size(x) / 8, kind(y))
+! y = int(storage_size(x) / 8, kind(y))
+y = int(c_sizeof(x), kind(y)) / 8
 end function size_of_qp
 
 #endif

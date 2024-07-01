@@ -63,12 +63,17 @@ integer(IK) :: kworst
 integer(IK) :: m
 integer(IK) :: maxfilt
 integer(IK) :: n
+integer(IK) :: i
 logical :: keep(nfilt)
 real(RP) :: cfilt_shifted(size(ffilt))
 real(RP) :: cref
 real(RP) :: fref
 real(RP) :: phi(size(ffilt))
 real(RP) :: phimax
+real, allocatable :: temp_xfilt(:,:)
+real, allocatable :: temp_ffilt(:)
+real, allocatable :: temp_cfilt(:)
+real, allocatable :: temp_confilt(:,:)
 
 ! Sizes
 if (present(constr)) then
@@ -156,7 +161,7 @@ if (count(keep) == maxfilt) then  ! In this case, NFILT = SIZE(KEEP) = COUNT(KEE
     phimax = maxval(phi)
     cref = maxval(cfilt_shifted, mask=(phi >= phimax))
     fref = maxval(ffilt, mask=(cfilt_shifted >= cref))
-    kworst = int(maxloc(cfilt, mask=(ffilt >= fref), dim=1), kind(kworst))
+    ! kworst = int(maxloc(cfilt, mask=(ffilt >= fref), dim=1), kind(kworst))
     !!MATLAB: cmax = max(cfilt(ffilt >= fref)); kworst = find(ffilt >= fref & ~(cfilt < cmax), 1,'first');
     if (kworst < 1 .or. kworst > size(keep)) then  ! For security. Should not happen.
         kworst = 1
@@ -166,12 +171,48 @@ end if
 
 nfilt = int(count(keep), kind(nfilt))
 index_to_keep(1:nfilt) = trueloc(keep)
-xfilt(:, 1:nfilt) = xfilt(:, index_to_keep(1:nfilt))
-ffilt(1:nfilt) = ffilt(index_to_keep(1:nfilt))
-cfilt(1:nfilt) = cfilt(index_to_keep(1:nfilt))
+! Allocate temporary arrays with the appropriate sizes
+allocate(temp_xfilt(size(xfilt, 1), nfilt))
+allocate(temp_ffilt(nfilt))
+allocate(temp_cfilt(nfilt))
+
+! Assign values to the temporary arrays using a loop to handle index mapping
+do i = 1, nfilt
+    temp_xfilt(:, i) = xfilt(:, index_to_keep(i))
+    temp_ffilt(i) = ffilt(index_to_keep(i))
+    temp_cfilt(i) = cfilt(index_to_keep(i))
+end do
+
+! Copy the temporary arrays back to the original arrays
+xfilt(:, 1:nfilt) = temp_xfilt
+ffilt(1:nfilt) = temp_ffilt
+cfilt(1:nfilt) = temp_cfilt
+
+! Check if confilt and constr are present and handle them similarly
 if (present(confilt) .and. present(constr)) then
-    confilt(:, 1:nfilt) = confilt(:, index_to_keep(1:nfilt))
+    ! Allocate the temporary array for confilt
+    allocate(temp_confilt(size(confilt, 1), nfilt))
+    
+    ! Assign values to the temporary array using a loop to handle index mapping
+    do i = 1, nfilt
+        temp_confilt(:, i) = confilt(:, index_to_keep(i))
+    end do
+    
+    ! Copy the temporary array back to the original array
+    confilt(:, 1:nfilt) = temp_confilt
+    
+    ! Deallocate the temporary array for confilt
+    deallocate(temp_confilt)
 end if
+! Deallocate the temporary arrays
+deallocate(temp_xfilt, temp_ffilt, temp_cfilt)
+
+! xfilt(:, 1:nfilt) = xfilt(:, index_to_keep(1:nfilt))
+! ffilt(1:nfilt) = ffilt(index_to_keep(1:nfilt))
+! cfilt(1:nfilt) = cfilt(index_to_keep(1:nfilt))
+! if (present(confilt) .and. present(constr)) then
+!     confilt(:, 1:nfilt) = confilt(:, index_to_keep(1:nfilt))
+! end if
 
 nfilt = nfilt + 1_IK
 xfilt(:, nfilt) = x
@@ -319,7 +360,7 @@ else
     phimin = minval(phi, mask=(fhist < fref .and. chist_shifted <= cref))
     cref = minval(chist_shifted, mask=(fhist < fref .and. phi <= phimin))
     fref = minval(fhist, mask=(chist_shifted <= cref))
-    kopt = int(minloc(chist, mask=(fhist <= fref), dim=1), kind(kopt))
+    ! kopt = int(minloc(chist, mask=(fhist <= fref), dim=1), kind(kopt))
     !!MATLAB: cmin = min(chist(fhist <= fref)); kopt = find(fhist <= fref & ~(chist > cmin), 1,'first');
 end if
 

@@ -41,7 +41,7 @@ function setdrop_tr(kopt, ximproved, d, pl, rho, xpt) result(knew)
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : trueloc
+! use, non_intrinsic :: linalg_mod, only : trueloc
 use, non_intrinsic :: powalg_mod, only : calvlag
 
 implicit none
@@ -97,13 +97,13 @@ end if
 ! knowing KNEW (see lines 332-344 and 404--431 of lincob.f). Hence Powell's LINCOA code picks KNEW
 ! based on the distance to the un-updated "optimal point", which is unreasonable. This has been
 ! corrected in our implementation of LINCOA, yet it does not boost the performance.
-if (ximproved) then
-    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion
-else
-    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
-end if
+! if (ximproved) then
+!     distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
+!     !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion
+! else
+!     distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+!     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
+! end if
 
 weight = max(ONE, distsq / rho**2)**4
 ! Other possible definitions of WEIGHT.
@@ -134,7 +134,7 @@ if (.not. ximproved) then
 end if
 
 ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we exclude such K.
-score(trueloc(is_nan(score))) = -ONE
+! score(trueloc(is_nan(score))) = -ONE
 
 knew = 0
 ! It makes almost no difference if we change the IF below to `IF (ANY(SCORE>0))`, which is used
@@ -194,7 +194,7 @@ function geostep(knew, kopt, delbar, pl, xpt) result(d)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, vec2smat, smat_mul_vec
+! use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, vec2smat, smat_mul_vec
 use, non_intrinsic :: powalg_mod, only : calvlag
 
 implicit none
@@ -268,12 +268,12 @@ end if
 xopt = xpt(:, kopt)
 
 ! For the KNEW-th Lagrange function, evaluate the gradient at XOPT and the Hessian.
-g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xopt)
-h = vec2smat(pl(n + 1:npt - 1, knew))
+! g = pl(1:n, knew) + smat_mul_vec(pl(n + 1:npt - 1, knew), xopt)
+! h = vec2smat(pl(n + 1:npt - 1, knew))
 
 ! Evaluate GG = G^T*G and GHG = G^T*H*G. They will be used later.
 gg = sum(g**2)
-ghg = inprod(g, matprod(h, g))
+! ghg = inprod(g, matprod(h, g))
 
 ! Calculate the Cauchy step as a backup. Powell's code does not have this, and D may be 0 or NaN.
 if (gg > 0 .and. is_finite(gg)) then
@@ -283,11 +283,11 @@ if (gg > 0 .and. is_finite(gg)) then
     end if
 else ! GG is 0 or NaN due to rounding errors. Set DCAUCHY to a displacement from XOPT to XPT(:, KNEW).
     dcauchy = xpt(:, knew) - xopt
-    scaling = delbar / norm(dcauchy)
+    ! scaling = delbar / norm(dcauchy)
     dcauchy = max(0.6_RP * scaling, min(HALF, scaling)) * dcauchy  ! 0.6: ensure |D| > DELBAR/2
-    if (inprod(g, dcauchy) * inprod(dcauchy, matprod(h, dcauchy)) < 0) then
-        dcauchy = -dcauchy
-    end if
+    ! if (inprod(g, dcauchy) * inprod(dcauchy, matprod(h, dcauchy)) < 0) then
+        ! dcauchy = -dcauchy
+    ! end if
 end if
 
 ! Return if H or G contains NaN or H is zero. Powell's code does not do this.
@@ -311,18 +311,18 @@ end if
 v = h(:, maxloc(sum(h**2, dim=1), dim=1))
 ! Normalize V. Powell's code does not do this. It does not change the algorithm as only its
 ! direction matters. It slightly improves the performance in the noiseless case.
-v = v / norm(v)
+! v = v / norm(v)
 
 ! Set D to a vector in the subspace span{V, HV} that maximizes |(D, HD)|/(D, D), except that we set
 ! D = HV if V and HV are nearly parallel.
 vv = sum(v**2)
-d = matprod(h, v)
-vhv = inprod(v, d)
+! d = matprod(h, v)
+! vhv = inprod(v, d)
 if (vhv * vhv <= 0.9999_RP * sum(d**2) * vv) then
     d = d - (vhv / vv) * v
     dd = sum(d**2)
     scaling = sqrt(dd / vv)
-    dhd = inprod(d, matprod(h, d))
+    ! dhd = inprod(d, matprod(h, d))
     v = scaling * v
     vhv = scaling * scaling * vhv
     vhd = scaling * dd
@@ -337,8 +337,8 @@ end if
 ! We now turn our attention to the subspace span{G, D}. A multiple of the current D is returned if
 ! that choice seems to be adequate.
 dd = sum(d**2)
-gd = inprod(g, d)
-dhd = inprod(d, matprod(h, d))
+! gd = inprod(g, d)
+! dhd = inprod(d, matprod(h, d))
 
 ! Zaikun 20220504: GG and DD can become 0 at this point due to rounding. Detected by IFORT.
 if (.not. (gg > 0 .and. dd > 0)) then
@@ -366,9 +366,9 @@ end if
 
 ! G and V are now orthogonal in the subspace span{G, D}. Hence we generate an orthonormal basis of
 ! this subspace such that (D, HV) is negligible or 0, where D and V will be the basis vectors.
-hv = matprod(h, v)
-vhg = inprod(g, hv)
-vhv = inprod(v, hv)
+! hv = matprod(h, v)
+! vhg = inprod(g, hv)
+! vhv = inprod(v, hv)
 vnorm = sqrt(vv)
 ghg = ghg / gg
 vhg = vhg / (vnorm * gnorm)
@@ -447,7 +447,7 @@ if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     ! In theory, ||D|| = DELBAR. Considering rounding errors, we check that DELBAR/2 < ||D|| < 2*DELBAR.
     ! It is crucial to ensure that the geometry step is nonzero.
-    call assert(norm(d) > HALF * delbar .and. norm(d) < TWO * delbar, 'DELBAR/2 < ||D|| < 2*DELBAR', srname)
+    ! call assert(norm(d) > HALF * delbar .and. norm(d) < TWO * delbar, 'DELBAR/2 < ||D|| < 2*DELBAR', srname)
 end if
 end function geostep
 

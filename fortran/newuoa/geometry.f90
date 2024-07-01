@@ -104,13 +104,13 @@ end if
 ! knowing KNEW (see lines 332-344 and 404--431 of lincob.f). Hence Powell's LINCOA code picks KNEW
 ! based on the distance to the un-updated "optimal point", which is unreasonable. This has been
 ! corrected in our implementation of LINCOA, yet it does not boost the performance.
-if (ximproved) then
-    distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion
-else
-    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
-    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
-end if
+! if (ximproved) then
+!     distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
+!     !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion
+! else
+!     distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+!     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
+! end if
 
 weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Powell's code.
 ! Other possible definitions of WEIGHT.
@@ -616,7 +616,7 @@ xsq = inprod(x, x)
 if (.not. (ds**2 <= 0.99_RP * dd * ss)) then
     ! `.NOT. (A <= B)` differs from `A > B`.  The former holds iff A > B or {A, B} contains NaN.
     dtest = ds**2 / ss
-    xptemp = xpt - spread(x, dim=2, ncopies=npt)
+    ! xptemp = xpt - spread(x, dim=2, ncopies=npt)
     !!MATLAB: xptemp = xpt - x  % x should be a column! Implicit expansion
     !----------------------------------------------------------------!
     !---------!dstemp = matprod(d, xpt) - inprod(x, d) !-------------!

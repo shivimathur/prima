@@ -21,117 +21,154 @@ contains
 
 
 subroutine prehist(maxhist, n, output_xhist, xhist, output_fhist, fhist, output_chist, chist, m, output_conhist, conhist)
-!--------------------------------------------------------------------------------------------------!
-! This subroutine revises MAXHIST according to MAXHISTMEM, and allocates memory for the history.
-! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
-! XHIST = NaN(N, MAXFUN), FHIST = NaN(1, MAXFUN), CHIST = NaN(1, MAXFUN), CONHIST = NaN(M, MAXFUN),
-! if they are requested; replace MAXFUN with 0 for the history that is not requested.
-!--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, MAXHISTMEM, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : int
-use, non_intrinsic :: memory_mod, only : safealloc, cstyle_sizeof
-implicit none
+    !--------------------------------------------------------------------------------------------------!
+    ! This subroutine revises MAXHIST according to MAXHISTMEM, and allocates memory for the history.
+    ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
+    ! XHIST = NaN(N, MAXFUN), FHIST = NaN(1, MAXFUN), CHIST = NaN(1, MAXFUN), CONHIST = NaN(M, MAXFUN),
+    ! if they are requested; replace MAXFUN with 0 for the history that is not requested.
+    !--------------------------------------------------------------------------------------------------!
+    use, non_intrinsic :: consts_mod, only : RP, IK, MAXHISTMEM, DEBUGGING
+    use, non_intrinsic :: debug_mod, only : assert
+    use, non_intrinsic :: linalg_mod, only : int
+    use, non_intrinsic :: memory_mod, only : safealloc, cstyle_sizeof
+    implicit none
 
-! Inputs
-integer(IK), intent(in) :: n
-integer(IK), intent(in), optional :: m
-logical, intent(in) :: output_fhist
-logical, intent(in) :: output_xhist
-logical, intent(in), optional :: output_chist
-logical, intent(in), optional :: output_conhist
+    ! Inputs
+    integer(IK), intent(in) :: n
+    integer(IK), intent(in), optional :: m
+    logical, intent(in) :: output_fhist
+    logical, intent(in) :: output_xhist
+    logical, intent(in), optional :: output_chist
+    logical, intent(in), optional :: output_conhist
 
-! In-outputs
-integer(IK), intent(inout) :: maxhist
+    ! In-outputs
+    integer(IK), intent(inout) :: maxhist
 
-! Outputs
-real(RP), intent(out), allocatable :: fhist(:)
-real(RP), intent(out), allocatable :: xhist(:, :)
-real(RP), intent(out), optional, allocatable :: chist(:)
-real(RP), intent(out), optional, allocatable :: conhist(:, :)
+    ! Outputs
+    real(RP), intent(out), allocatable :: fhist(:)
+    real(RP), intent(out), allocatable :: xhist(:, :)
+    real(RP), intent(out), optional, allocatable :: chist(:)
+    real(RP), intent(out), optional, allocatable :: conhist(:, :)
 
-! Local variables
-character(len=*), parameter :: srname = 'PREHIST'
-integer :: unit_memo  ! INTEGER(IK) may overflow if IK corresponds to the 16-bit integer.
-integer(IK) :: maxhist_in
+    ! Local variables
+    character(len=*), parameter :: srname = 'PREHIST'
+    integer :: unit_memo  ! INTEGER(IK) may overflow if IK corresponds to the 16-bit integer.
+    integer(IK) :: maxhist_in
+    integer :: output_xhist_int  ! Added to declare output_xhist_int
+    integer :: output_fhist_int  ! Added to declare output_fhist_int
+    integer :: output_chist_int  ! Added to declare output_chist_int
+    integer :: output_conhist_int  ! Added to declare output_conhist_int
 
-! Preconditions
-if (DEBUGGING) then
-    call assert(maxhist >= 0, 'MAXHIST >= 0', srname)
-    call assert(n >= 1, 'N >= 1', srname)
-    if (present(m)) then
-        call assert(m >= 0, 'M >= 0', srname)
+    ! Preconditions
+    if (DEBUGGING) then
+        call assert(maxhist >= 0, 'MAXHIST >= 0', srname)
+        call assert(n >= 1, 'N >= 1', srname)
+        if (present(m)) then
+            call assert(m >= 0, 'M >= 0', srname)
+        end if
+        call assert(present(output_chist) .eqv. present(chist), &
+            & 'OUTPUT_CHIST and CHIST are both present or both absent', srname)
+        call assert((present(m) .eqv. present(conhist)) .and. (present(output_conhist) .eqv. present(conhist)), &
+            & 'M, OUTPUT_CONHIST, and CONHIST are all present or all absent', srname)
     end if
-    call assert(present(output_chist) .eqv. present(chist), &
-        & 'OUTPUT_CHIST and CHIST are both present or both absent', srname)
-    call assert((present(m) .eqv. present(conhist)) .and. (present(output_conhist) .eqv. present(conhist)), &
-        & 'M, OUTPUT_CONHIST, and CONHIST are all present or all absent', srname)
-end if
 
-!====================!
-! Calculation starts !
-!====================!
+    !====================!
+    ! Calculation starts !
+    !====================!
 
-! Save the input value of MAXHIST for debugging.
-maxhist_in = maxhist
+    ! Save the input value of MAXHIST for debugging.
+    maxhist_in = maxhist
 
-! Revise MAXHIST according to MAXHISTMEM, i.e., the maximal memory allowed for the history.
-! N.B.: The `UNIT_MEMO = INT(*)` below converts integers to the default integer kind, which is the
-! kind of UNIT_MEMO. Fortran compilers may complain without the conversion. It is not needed in
-! Python/MATLAB/Julia/R. Meanwhile, INT(OUTPUT_*HIST) converts booleans to integers.
-unit_memo = int(int(output_xhist) * n + int(output_fhist))
-if (present(output_chist) .and. present(chist)) then
-    unit_memo = int(unit_memo + int(output_chist))
-end if
-if (present(m) .and. present(output_conhist) .and. present(conhist)) then
-    unit_memo = int(unit_memo + int(output_conhist) * m)
-end if
-unit_memo = unit_memo * int(cstyle_sizeof(0.0_RP))  ! INT(*) avoids overflow when IK is 16-bit.
-if (unit_memo <= 0) then  ! No output of history is requested
-    maxhist = 0
-elseif (maxhist > MAXHISTMEM / unit_memo) then
-    maxhist = int(MAXHISTMEM / unit_memo, kind(maxhist))  ! Integer division.
+    if (output_chist) then 
+        output_chist_int = 1
+    else 
+        output_chist_int = 0
+    end if 
+
+    if (output_conhist) then 
+        output_conhist_int = 1
+    else 
+        output_conhist_int = 0
+    end if 
+
+    if (output_xhist) then 
+        output_xhist_int = 1
+    else 
+        output_xhist_int = 0
+    end if 
+
+    if (output_fhist) then 
+        output_fhist_int = 1
+    else 
+        output_fhist_int = 0
+    end if 
+    ! Revise MAXHIST according to MAXHISTMEM, i.e., the maximal memory allowed for the history.
+    ! N.B.: The `UNIT_MEMO = INT(*)` below converts integers to the default integer kind, which is the
+    ! kind of UNIT_MEMO. Fortran compilers may complain without the conversion. It is not needed in
+    ! Python/MATLAB/Julia/R. Meanwhile, INT(OUTPUT_*HIST) converts booleans to integers.
+    unit_memo = output_xhist_int * n + output_fhist_int
+    ! unit_memo = int(int(output_xhist) * n + int(output_fhist))
+    if (present(output_chist) .and. present(chist)) then
+        unit_memo = unit_memo + output_chist_int
+        ! unit_memo = int(unit_memo + int(output_chist))
+    end if
+
+    if (present(m) .and. present(output_conhist) .and. present(conhist)) then
+        unit_memo = unit_memo + output_conhist_int * m
+        ! unit_memo = int(unit_memo + int(output_conhist) * m)
+    end if
+
+    unit_memo = unit_memo * int(cstyle_sizeof(0.0_RP))  ! INT(*) avoids overflow when IK is 16-bit.
+    if (unit_memo <= 0) then  ! No output of history is requested
+        maxhist = 0
+    elseif (maxhist > MAXHISTMEM / unit_memo) then
+        maxhist = int(MAXHISTMEM / unit_memo, kind(maxhist))  ! Integer division.
     ! We cannot simply set MAXHIST = MIN(MAXHIST, MAXHISTMEM/UNIT_MEMO), as they may not have
     ! the same kind, and compilers may complain. We may convert them, but overflow may occur.
-end if
+    end if
 
-call safealloc(xhist, n, maxhist * int(output_xhist))
-call safealloc(fhist, maxhist * int(output_fhist))
-! Even if OUTPUT_CHIST is FALSE, CHIST still needs to be allocated.
-if (present(output_chist) .and. present(chist)) then
-    call safealloc(chist, maxhist * int(output_chist))
-end if
-! Even if OUTPUT_CONHIST is FALSE, CONHIST still needs to be allocated.
-if (present(m) .and. present(output_conhist) .and. present(conhist)) then
-    call safealloc(conhist, m, maxhist * int(output_conhist))
-end if
+    call safealloc(xhist, n, maxhist * output_xhist_int)
+    call safealloc(fhist, maxhist * output_fhist_int)
+    ! call safealloc(xhist, n, maxhist * int(output_xhist))
+    ! call safealloc(fhist, maxhist * int(output_fhist))
 
-!====================!
-!  Calculation ends  !
-!====================!
-
-! Postconditions
-if (DEBUGGING) then
-    call assert(maxhist >= 0 .and. maxhist <= maxhist_in, '0 <= MAXHIST <= MAXHIST_IN', srname)
-    call assert(int(maxhist, kind(MAXHISTMEM)) * int(unit_memo, kind(MAXHISTMEM)) <= MAXHISTMEM, &
-        & 'The history will not take more memory than MAXHISTMEM', srname)
-    call assert(allocated(xhist), 'XHIST is allocated', srname)
-    call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxhist * int(output_xhist), &
-        & 'if XHIST is requested, then SIZE(XHIST) == [N, MAXHIST]; otherwise, SIZE(XHIST) == [N, 0]', srname)
-    call assert(allocated(fhist), 'FHIST is allocated', srname)
-    call assert(size(fhist) == maxhist * int(output_fhist), &
-        & 'if FHIST is requested, then SIZE(FHIST) == MAXHIST; otherwise, SIZE(FHIST) == 0', srname)
+    ! Even if OUTPUT_CHIST is FALSE, CHIST still needs to be allocated.
     if (present(output_chist) .and. present(chist)) then
-        call assert(allocated(chist), 'CHIST is allocated', srname)
-        call assert(size(chist) == maxhist * int(output_chist), &
-            & 'if CHIST is requested, then SIZE(CHIST) == MAXHIST; otherwise, SIZE(CHIST) == 0', srname)
+        call safealloc(xhist, n, maxhist * output_chist_int)
+        ! call safealloc(chist, maxhist * int(output_chist))
     end if
+    ! Even if OUTPUT_CONHIST is FALSE, CONHIST still needs to be allocated.
     if (present(m) .and. present(output_conhist) .and. present(conhist)) then
-        call assert(allocated(conhist), 'CONHIST is allocated', srname)
-        call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxhist * int(output_conhist), &
-            & 'if CONHIST is requested, then SIZE(CONHIST) == [M, MAXHIST]; otherwise, SIZE(CONHIST) == [M, 0]', srname)
+        call safealloc(xhist, n, maxhist * output_conhist_int)
+        ! call safealloc(conhist, m, maxhist * int(output_conhist))
     end if
-end if
+
+    !====================!
+    !  Calculation ends  !
+    !====================!
+
+    ! Postconditions
+    if (DEBUGGING) then
+        call assert(maxhist >= 0 .and. maxhist <= maxhist_in, '0 <= MAXHIST <= MAXHIST_IN', srname)
+        call assert(int(maxhist, kind(MAXHISTMEM)) * int(unit_memo, kind(MAXHISTMEM)) <= MAXHISTMEM, &
+            & 'The history will not take more memory than MAXHISTMEM', srname)
+        call assert(allocated(xhist), 'XHIST is allocated', srname)
+        call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxhist * output_xhist_int, &
+            & 'if XHIST is requested, then SIZE(XHIST) == [N, MAXHIST]; otherwise, SIZE(XHIST) == [N, 0]', srname)
+        call assert(allocated(fhist), 'FHIST is allocated', srname)
+        call assert(size(fhist) == maxhist * output_fhist_int, &
+            & 'if FHIST is requested, then SIZE(FHIST) == MAXHIST; otherwise, SIZE(FHIST) == 0', srname)
+        if (present(output_chist) .and. present(chist)) then
+            call assert(allocated(chist), 'CHIST is allocated', srname)
+            call assert(size(chist) == maxhist * output_chist_int, &
+                & 'if CHIST is requested, then SIZE(CHIST) == MAXHIST; otherwise, SIZE(CHIST) == 0', srname)
+        end if
+        if (present(m) .and. present(output_conhist) .and. present(conhist)) then
+            call assert(allocated(conhist), 'CONHIST is allocated', srname)
+            call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxhist * output_conhist_int, &
+                & 'if CONHIST is requested, then SIZE(CONHIST) == [M, MAXHIST]; otherwise, SIZE(CONHIST) == [M, 0]', srname)
+        end if
+    end if
 end subroutine prehist
 
 

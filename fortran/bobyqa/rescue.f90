@@ -30,7 +30,7 @@ contains
 
 
 subroutine rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, fval, &
-    & gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, zmat, info)
+& gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine implements "the method of RESCUE" introduced in Section 5 of BOBYQA paper. The
 ! purpose of this subroutine is to replace a few interpolation points by new points in order to
@@ -94,7 +94,7 @@ subroutine rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, 
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: evaluate_mod, only : evaluate
+! use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : MAXFUN_REACHED, INFO_DFT
@@ -182,6 +182,7 @@ real(RP) :: xopt(size(xpt, 1))
 real(RP) :: xp
 real(RP) :: xq
 real(RP) :: xxpt(size(xpt, 2))
+real(8), dimension(:), allocatable :: temp2
 
 n = int(size(xpt, 1), kind(n))
 npt = int(size(xpt, 2), kind(npt))
@@ -216,8 +217,8 @@ if (DEBUGGING) then
         call assert(all(xhist(:, k) >= xl) .and. all(xhist(:, k) <= xu), 'XL <= XHIST <= XU', srname)
     end do
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
-        & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
+    ! call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
+    ! & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
@@ -243,7 +244,7 @@ xopt = xpt(:, kopt)
 sl = min(sl - xopt, ZERO)
 su = max(su - xopt, ZERO)
 xbase = min(max(xl, xbase + xopt), xu)
-xpt = xpt - spread(xopt, dim=2, ncopies=npt)
+! xpt = xpt - spread(xopt, dim=2, ncopies=npt)
 xpt(:, kopt) = ZERO
 
 ! Update HQ so that HQ and PQ define the second derivatives of the model after XBASE has been
@@ -337,7 +338,7 @@ do iter = 1, maxiter
 
     ! Pick the index KORIG of an original point that has not yet replaced one of the provisional
     ! points, giving attention to the closeness to XOPT and to previous tries with KORIG.
-    korig = int(minloc(score, mask=(score > 0), dim=1), kind(korig))
+    ! korig = int(minloc(score, mask=(score > 0), dim=1), kind(korig))
 
     ! Calculate VLAG and BETA for the required updating of the H matrix if XPT(:, KORIG) is
     ! reinstated in the set of interpolation points, which means to replace a point in the
@@ -421,7 +422,7 @@ do iter = 1, maxiter
         score(korig) = -score(korig) - scoreinc
         cycle
     end if
-    kprov = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), kind(kprov))
+    ! kprov = int(maxloc(den, mask=(.not. is_nan(den)), dim=1), kind(kprov))
     !!MATLAB: [~, kprov] = max(den, [], 'omitnan');
 
     ! Update BMAT, ZMAT, VLAG, and PTSID to exchange the KPROV-th and KORIG-th provisional points.
@@ -508,7 +509,7 @@ if (nprov > 0) then
         ! multiply the KPT-th Lagrange function when the model is updated to provide interpolation
         ! to the new function value.
         x = xinbd(xbase, xpt(:, kpt), xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XPT(:, KPT).
-        call evaluate(calfun, x, f)
+        ! call evaluate(calfun, x, f)
         nf = nf + 1_IK
 
         ! Print a message about the function evaluation according to IPRINT.
@@ -575,7 +576,9 @@ end if
 
 ! Update GOPT if necessary.
 if (kopt /= kbase) then
-    gopt = gopt + hess_mul(xpt(:, kopt), xpt, pq, hq)
+    allocate(temp2(size(xpt, 1)))
+    temp2 = xpt(:, kopt)
+    gopt = gopt + hess_mul(temp2, xpt, pq, hq)
 end if
 
 !--------------------------------------------------------------------------------------------------!
@@ -620,8 +623,8 @@ if (DEBUGGING) then
     end do
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
-        & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
+    ! call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
+    !     & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)

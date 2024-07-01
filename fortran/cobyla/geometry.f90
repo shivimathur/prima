@@ -141,7 +141,7 @@ end if
 ! DISTQ(J) is the square of the distance from the J-th vertex of the simplex to the "best" point so
 ! far, taking the trial point SIM(:, N+1) + D into account.
 if (ximproved) then
-    distsq(1:n) = sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1)
+    ! distsq(1:n) = sum((sim(:, 1:n) - spread(d, dim=2, ncopies=n))**2, dim=1)
     !!MATLAB: distsq = sum((sim(:, 1:n) - d).^2);  % d should be a column! Implicit expansion
     distsq(n + 1) = sum(d**2)
 else
@@ -276,7 +276,7 @@ d = delbar * (d / norm(d))
 ! So we cannot pass G and A from outside.
 g = matprod(fval(1:n) - fval(n + 1), simi)
 A(:, 1:m_lcon) = amat
-A(:, m_lcon + 1:m) = transpose(matprod(conmat(m_lcon + 1:m, 1:n) - spread(conmat(m_lcon + 1:m, n + 1), dim=2, ncopies=n), simi))
+! A(:, m_lcon + 1:m) = transpose(matprod(conmat(m_lcon + 1:m, 1:n) - spread(conmat(m_lcon + 1:m, n + 1), dim=2, ncopies=n), simi))
 !!MATLAB: A(:, m_lcon+1:m) = simi'*(conmat(m_lcon+1:m, 1:n) - conmat(m_lcon+1:m, n+1))' % Implicit expansion for subtraction
 ! CVPD and CVND are the predicted constraint violation of D and -D by the linear models.
 cvpd = maximum([ZERO, conmat(:, n + 1) + matprod(d, A)])

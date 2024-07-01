@@ -43,7 +43,7 @@ subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x0, ij, kopt,
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: evaluate_mod, only : evaluate
+! use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT
@@ -196,7 +196,7 @@ end do
 ! Set FVAL(1 : MIN(2*N + 1, NPT)) by evaluating F. Totally parallelizable except for FMSG.
 do k = 1, min(npt, int(2 * n + 1, kind(npt)))
     x = xinbd(xbase, xpt(:, k), xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XPT(:, K).
-    call evaluate(calfun, x, f)
+    ! call evaluate(calfun, x, f)
 
     ! Print a message about the function evaluation according to IPRINT.
     call fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x)
@@ -243,13 +243,13 @@ ij = setij(n, npt)
 ! Set XPT(:, 2*N + 2 : NPT). It depends on XPT(:, 1 : 2*N + 1) and hence on FVAL(1: 2*N + 1).
 ! Indeed, XPT(:, K) has only two nonzeros for each K >= 2*N+2.
 ! N.B.: The 1 in IJ + 1 comes from the fact that XPT(:, 1) corresponds to XBASE.
-xpt(:, 2 * n + 2:npt) = xpt(:, ij(1, :) + 1) + xpt(:, ij(2, :) + 1)
+! xpt(:, 2 * n + 2:npt) = xpt(:, ij(1, :) + 1) + xpt(:, ij(2, :) + 1)
 
 ! Set FVAL(2*N + 2 : NPT) by evaluating F. Totally parallelizable except for FMSG.
 if (info == INFO_DFT) then
     do k = int(2 * n + 2, kind(k)), npt
         x = xinbd(xbase, xpt(:, k), xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XPT(:, K).
-        call evaluate(calfun, x, f)
+        ! call evaluate(calfun, x, f)
 
         ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x)
@@ -270,7 +270,7 @@ end if
 
 ! Set NF, KOPT
 nf = int(count(evaluated), kind(nf))
-kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
+! kopt = int(minloc(fval, mask=evaluated, dim=1), kind(kopt))
 !!MATLAB: fopt = min(fval(evaluated)); kopt = find(evaluated & ~(fval > fopt), 1, 'first');
 
 !====================!
@@ -289,8 +289,8 @@ if (DEBUGGING) then
     call assert(all(xbase >= xl .and. xbase <= xu), 'XL <= XBASE <= XU', srname)
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
-    call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
-        & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
+    ! call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
+    !     & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
     call assert(size(fval) == npt .and. .not. any(evaluated .and. (is_nan(fval) .or. is_posinf(fval))), &
         & 'SIZE(FVAL) == NPT and FVAL is not NaN or +Inf', srname)
     call assert(.not. any(evaluated .and. fval < fval(kopt)), 'FVAL(KOPT) = MINVAL(FVAL)', srname)

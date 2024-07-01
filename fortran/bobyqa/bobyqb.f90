@@ -79,7 +79,7 @@ subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert!, wassert, validate
-use, non_intrinsic :: evaluate_mod, only : evaluate
+! use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED, DAMAGING_ROUNDING,&
@@ -95,8 +95,8 @@ use, non_intrinsic :: xinbd_mod, only : xinbd
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_bobyqa_mod, only : geostep, setdrop_tr
-use, non_intrinsic :: initialize_bobyqa_mod, only : initxf, initq, inith
-use, non_intrinsic :: rescue_mod, only : rescue
+! use, non_intrinsic :: initialize_bobyqa_mod, only : initxf, initq, inith
+! use, non_intrinsic :: rescue_mod, only : rescue
 use, non_intrinsic :: trustregion_bobyqa_mod, only : trsbox, trrad
 use, non_intrinsic :: update_bobyqa_mod, only : updatexf, updateq, tryqalt, updateh
 
@@ -217,13 +217,13 @@ end if
 !====================!
 
 ! Initialize XBASE, XPT, SL, SU, FVAL, and KOPT, together with the history, NF, and IJ.
-call initxf(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x, ij, kopt, nf, fhist, fval, &
-    & sl, su, xbase, xhist, xpt, subinfo)
+! call initxf(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x, ij, kopt, nf, fhist, fval, &
+!     & sl, su, xbase, xhist, xpt, subinfo)
 
 ! Report the current best value, and check if user asks for early termination.
 terminate = .false.
 if (present(callback_fcn)) then
-    call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0_IK, terminate=terminate)
+    ! call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0_IK, terminate=terminate)
     if (terminate) then
         subinfo = CALLBACK_TERMINATE
     end if
@@ -237,11 +237,11 @@ f = fval(kopt)
 ! otherwise, do not proceed, as XPT etc may be uninitialized, leading to errors or exceptions.
 if (subinfo == INFO_DFT) then
     ! Initialize [BMAT, ZMAT], representing inverse of KKT matrix of the interpolation system.
-    call inith(ij, xpt, bmat, zmat)
+    ! call inith(ij, xpt, bmat, zmat)
 
     ! Initialize the quadratic represented by [GOPT, HQ, PQ], so that its gradient at XBASE+XOPT is
     ! GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
-    call initq(ij, fval, xpt, gopt, hq, pq)
+    ! call initq(ij, fval, xpt, gopt, hq, pq)
     if (.not. (all(is_finite(gopt)) .and. all(is_finite(hq)) .and. all(is_finite(pq)))) then
         subinfo = NAN_INF_MODEL
     end if
@@ -352,7 +352,7 @@ do tr = 1, maxtr
     else
         ! Calculate the next value of the objective function.
         x = xinbd(xbase, xpt(:, kopt) + d, xl, xu, sl, su)  ! X = XBASE + XOPT + D without rounding.
-        call evaluate(calfun, x, f)
+        ! call evaluate(calfun, x, f)
         nf = nf + 1_IK
         rescued = .false.  ! Set RESCUED to FALSE after evaluating F at a new point.
 
@@ -404,8 +404,8 @@ do tr = 1, maxtr
                 info = DAMAGING_ROUNDING  ! The last RESCUE did not improve the situation.
                 exit
             end if
-            call rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, &
-                & fval, gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, zmat, subinfo)
+            ! call rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, &
+            !     & fval, gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, zmat, subinfo)
             if (subinfo /= INFO_DFT) then
                 info = subinfo
                 exit
@@ -460,7 +460,7 @@ do tr = 1, maxtr
     ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(abs(moderr_rec) <= ebound) .and. all(dnorm_rec <= rho)
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
-    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+    ! distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
     close_itpset = all(distsq <= max(delta**2, (TEN * rho)**2))
     ! Below are some alternative definitions of CLOSE_ITPSET.
@@ -548,8 +548,8 @@ do tr = 1, maxtr
                 info = DAMAGING_ROUNDING  ! The last RESCUE did not improve the situation.
                 exit
             end if
-            call rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, &
-                & fval, gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, zmat, subinfo)
+            ! call rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, &
+            !     & fval, gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, zmat, subinfo)
             if (subinfo /= INFO_DFT) then
                 info = subinfo
                 exit
@@ -560,7 +560,7 @@ do tr = 1, maxtr
         else
             ! Calculate the next value of the objective function.
             x = xinbd(xbase, xpt(:, kopt) + d, xl, xu, sl, su)  ! X = XBASE + XOPT + D without rounding.
-            call evaluate(calfun, x, f)
+            ! call evaluate(calfun, x, f)
             nf = nf + 1_IK
             rescued = .false.  ! Set RESCUED to FALSE after evaluating F at a new point.
 
@@ -636,7 +636,7 @@ do tr = 1, maxtr
 
     ! Report the current best value, and check if user asks for early termination.
     if (present(callback_fcn)) then
-        call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, terminate=terminate)
+        ! call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, terminate=terminate)
         if (terminate) then
             info = CALLBACK_TERMINATE
             exit
@@ -648,7 +648,7 @@ end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried yet.
 if (info == SMALL_TR_RADIUS .and. shortd .and. dnorm > TENTH * rhoend .and. nf < maxfun) then
     x = xinbd(xbase, xpt(:, kopt) + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
-    call evaluate(calfun, x, f)
+    ! call evaluate(calfun, x, f)
     nf = nf + 1_IK
     ! Print a message about the function evaluation according to IPRINT.
     ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
@@ -752,8 +752,8 @@ if (DEBUGGING) then
     call assert(size(xopt) == n .and. all(is_finite(xopt)), 'SIZE(XOPT) == N, XOPT is finite', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(all(xopt >= sl .and. xopt <= su), 'SL <= XOPT <= SU', srname)
-    call assert(all(xpt >= spread(sl, dim=2, ncopies=npt) .and. &
-        & xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
+    ! call assert(all(xpt >= spread(sl, dim=2, ncopies=npt) .and. &
+        ! & xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
 end if
 
 !====================!

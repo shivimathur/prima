@@ -19,7 +19,7 @@ use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR, C_ASSO
 use, non_intrinsic :: cintrf_mod, only : COBJ, CCALLBACK
 use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: infnan_mod, only : is_nan
-use, non_intrinsic :: lincoa_mod, only : lincoa
+! use, non_intrinsic :: lincoa_mod, only : lincoa
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
@@ -128,15 +128,15 @@ if (c_associated(callback_ptr)) then
     ! that pointer in the closure below.
     call c_f_procpointer(callback_ptr, cb_ptr)
     ! We then provide the closure to the algorithm.
-    call lincoa(calfun, x_loc, f_loc, cstrv=cstrv_loc, Aineq=Aineq_loc, bineq=bineq_loc, Aeq=Aeq_loc, &
-        & beq=beq_loc, xl=xl_loc, xu=xu_loc, nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, &
-        & ftarget=ftarget_loc, ctol=ctol_loc, maxfun=maxfun_loc, npt=npt_loc, iprint=iprint_loc, &
-        & callback_fcn=callback_fcn, info=info_loc)
+    ! call lincoa(calfun, x_loc, f_loc, cstrv=cstrv_loc, Aineq=Aineq_loc, bineq=bineq_loc, Aeq=Aeq_loc, &
+    !     & beq=beq_loc, xl=xl_loc, xu=xu_loc, nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, &
+    !     & ftarget=ftarget_loc, ctol=ctol_loc, maxfun=maxfun_loc, npt=npt_loc, iprint=iprint_loc, &
+    !     & callback_fcn=callback_fcn, info=info_loc)
 else
-    call lincoa(calfun, x_loc, f_loc, cstrv=cstrv_loc, Aineq=Aineq_loc, bineq=bineq_loc, Aeq=Aeq_loc, &
-        & beq=beq_loc, xl=xl_loc, xu=xu_loc, nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, &
-        & ftarget=ftarget_loc, ctol=ctol_loc, maxfun=maxfun_loc, npt=npt_loc, iprint=iprint_loc, &
-        & info=info_loc)
+    ! call lincoa(calfun, x_loc, f_loc, cstrv=cstrv_loc, Aineq=Aineq_loc, bineq=bineq_loc, Aeq=Aeq_loc, &
+    !     & beq=beq_loc, xl=xl_loc, xu=xu_loc, nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, &
+    !     & ftarget=ftarget_loc, ctol=ctol_loc, maxfun=maxfun_loc, npt=npt_loc, iprint=iprint_loc, &
+    !     & info=info_loc)
 end if
 
 ! Write the outputs

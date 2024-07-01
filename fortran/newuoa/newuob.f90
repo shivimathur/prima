@@ -54,7 +54,7 @@ subroutine newuob(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamm
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, TENTH, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: evaluate_mod, only : evaluate
+! use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, CALLBACK_TERMINATE, NAN_INF_MODEL
@@ -68,7 +68,7 @@ use, non_intrinsic :: shiftbase_mod, only : shiftbase
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_newuoa_mod, only : setdrop_tr, geostep
-use, non_intrinsic :: initialize_newuoa_mod, only : initxf, initq, inith
+! use, non_intrinsic :: initialize_newuoa_mod, only : initxf, initq, inith
 use, non_intrinsic :: trustregion_newuoa_mod, only : trsapp, trrad
 use, non_intrinsic :: update_newuoa_mod, only : updatexf, updateq, tryqalt
 
@@ -177,12 +177,12 @@ end if
 !====================!
 
 ! Initialize XBASE, XPT, FVAL, and KOPT, together with the history, NF, and IJ.
-call initxf(calfun, iprint, maxfun, ftarget, rhobeg, x, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
+! call initxf(calfun, iprint, maxfun, ftarget, rhobeg, x, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
 
 ! Report the current best value, and check if user asks for early termination.
 terminate = .false.
 if (present(callback_fcn)) then
-    call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0_IK, terminate=terminate)
+    ! call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0_IK, terminate=terminate)
     if (terminate) then
         subinfo = CALLBACK_TERMINATE
     end if
@@ -197,11 +197,11 @@ f = fval(kopt)
 if (subinfo == INFO_DFT) then
     ! Initialize [BMAT, ZMAT, IDZ], representing inverse of KKT matrix of the interpolation
     ! system.
-    call inith(ij, xpt, idz, bmat, zmat)
+    ! call inith(ij, xpt, idz, bmat, zmat)
 
     ! Initialize the quadratic represented by [GOPT, HQ, PQ], so that its gradient at XBASE+XOPT is
     ! GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
-    call initq(ij, fval, xpt, gopt, hq, pq)
+    ! call initq(ij, fval, xpt, gopt, hq, pq)
     if (.not. (all(is_finite(gopt)) .and. all(is_finite(hq)) .and. all(is_finite(pq)))) then
         subinfo = NAN_INF_MODEL
     end if
@@ -310,7 +310,7 @@ do tr = 1, maxtr
             f = fval(k)
         else
             ! Evaluate the objective function at X, taking care of possible Inf/NaN values.
-            call evaluate(calfun, x, f)
+            ! call evaluate(calfun, x, f)
             nf = nf + 1_IK
             ! Save X and F into the history.
             call savehist(nf, x, xhist, f, fhist)
@@ -405,7 +405,7 @@ do tr = 1, maxtr
     ! ACCURATE_MOD: Are the recent models sufficiently accurate? Used only if SHORTD is TRUE.
     accurate_mod = all(abs(moderr_rec) <= 0.125_RP * crvmin * rho**2) .and. all(dnorm_rec <= rho)
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT? It affects IMPROVE_GEO, REDUCE_RHO.
-    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+    ! distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
     close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Powell's code.
     ! Below are some alternative definitions of CLOSE_ITPSET.
@@ -557,7 +557,7 @@ do tr = 1, maxtr
             f = fval(k)
         else
             ! Evaluate the objective function at X, taking care of possible Inf/NaN values.
-            call evaluate(calfun, x, f)
+            ! call evaluate(calfun, x, f)
             nf = nf + 1_IK
             ! Save X and F into the history.
             call savehist(nf, x, xhist, f, fhist)
@@ -634,7 +634,7 @@ do tr = 1, maxtr
 
     ! Report the current best value, and check if user asks for early termination.
     if (present(callback_fcn)) then
-        call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, terminate=terminate)
+        ! call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, terminate=terminate)
         if (terminate) then
             info = CALLBACK_TERMINATE
             exit
@@ -646,7 +646,7 @@ end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried yet.
 x = xbase + (xpt(:, kopt) + d)
 if (info == SMALL_TR_RADIUS .and. shortd .and. norm(x - (xbase + xpt(:, kopt))) > TENTH * rhoend .and. nf < maxfun) then
-    call evaluate(calfun, x, f)
+    ! call evaluate(calfun, x, f)
     nf = nf + 1_IK
     ! Save X, F into the history.
     call savehist(nf, x, xhist, f, fhist)

@@ -198,7 +198,7 @@ subroutine bobyqa(calfun, x, &
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH, EPS, BOUNDMAX, DEBUGGING
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, MAXFUN_DIM_DFT, IPRINT_DFT
 use, non_intrinsic :: debug_mod, only : assert, warning
-use, non_intrinsic :: evaluate_mod, only : moderatex
+! use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: infos_mod, only : NO_SPACE_BETWEEN_BOUNDS
@@ -209,7 +209,7 @@ use, non_intrinsic :: preproc_mod, only : preproc
 use, non_intrinsic :: string_mod, only : num2str
 
 ! Solver-specific modules
-use, non_intrinsic :: bobyqb_mod, only : bobyqb
+! use, non_intrinsic :: bobyqb_mod, only : bobyqb
 
 implicit none
 
@@ -313,7 +313,7 @@ if (any(xu_loc - xl_loc < TWO * EPS)) then
     return
 end if
 
-x = max(xl_loc, min(xu_loc, moderatex(x)))
+! x = max(xl_loc, min(xu_loc, moderatex(x)))
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
 ! value for RHOBEG, taking the value of RHOEND into account. Note that RHOEND is considered only if
@@ -427,15 +427,15 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 
 
 !-------------------- Call BOBYQB, which performs the real calculations. --------------------------!
-if (present(callback_fcn)) then
-    call bobyqb(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, &
-        & gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, xl_loc, xu_loc, x, nf_loc, f_loc, &
-        & fhist_loc, xhist_loc, info_loc, callback_fcn)
-else
-    call bobyqb(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, &
-        & gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, xl_loc, xu_loc, x, nf_loc, f_loc, &
-        & fhist_loc, xhist_loc, info_loc)
-end if
+! if (present(callback_fcn)) then
+!     call bobyqb(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, &
+!         & gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, xl_loc, xu_loc, x, nf_loc, f_loc, &
+!         & fhist_loc, xhist_loc, info_loc, callback_fcn)
+! else
+!     call bobyqb(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, &
+!         & gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, xl_loc, xu_loc, x, nf_loc, f_loc, &
+!         & fhist_loc, xhist_loc, info_loc)
+! end if
 !--------------------------------------------------------------------------------------------------!
 
 ! Write the outputs.

@@ -42,7 +42,7 @@ subroutine cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, et
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, EPS, REALMAX, DEBUGGING, MIN_MAXFILT
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: evaluate_mod, only : evaluate
+! use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, DAMAGING_ROUNDING, CALLBACK_TERMINATE
@@ -55,7 +55,7 @@ use, non_intrinsic :: selectx_mod, only : savefilt, selectx, isbetter
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_cobyla_mod, only : setdrop_tr, geostep
-use, non_intrinsic :: initialize_cobyla_mod, only : initxfc, initfilt
+! use, non_intrinsic :: initialize_cobyla_mod, only : initxfc, initfilt
 use, non_intrinsic :: trustregion_cobyla_mod, only : trstlp, trrad
 use, non_intrinsic :: update_cobyla_mod, only : updatexfc, updatepole
 
@@ -202,8 +202,8 @@ end if
 ! function value (regardless of the constraint violation), and SIM(:, 1:N) holds the displacements
 ! from the other vertices to SIM(:, N+1). FVAL, CONMAT, and CVAL hold the function values,
 ! constraint values, and constraint violations on the vertices in the order corresponding to SIM.
-call initxfc(calcfc_internal, iprint, maxfun, constr, ctol, f, ftarget, rhobeg, x, nf, chist, conhist, &
-   & conmat, cval, fhist, fval, sim, simi, xhist, evaluated, subinfo)
+! call initxfc(calcfc_internal, iprint, maxfun, constr, ctol, f, ftarget, rhobeg, x, nf, chist, conhist, &
+!    & conmat, cval, fhist, fval, sim, simi, xhist, evaluated, subinfo)
 
 ! Report the current best value, and check if user asks for early termination.
 terminate = .false.
@@ -219,7 +219,7 @@ end if
 ! the iterations. COBYLA is NOT a filter method but a trust-region method based on an L-infinity
 ! merit function. Powell's implementation does not use a filter to select the iterate, possibly
 ! returning a suboptimal iterate.
-call initfilt(conmat, ctol, cweight, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
+! call initfilt(conmat, ctol, cweight, cval, fval, sim, evaluated, nfilt, cfilt, confilt, ffilt, xfilt)
 
 ! Check whether to return due to abnormal cases that may occur during the initialization.
 if (subinfo /= INFO_DFT) then
@@ -341,7 +341,7 @@ do tr = 1, maxtr
     ! (not necessarily a good algorithm). No preconditioning or scaling was used.
     g = matprod(fval(1:n) - fval(n + 1), simi)
     A(:, 1:m_lcon) = amat
-    A(:, m_lcon + 1:m) = transpose(matprod(conmat(m_lcon + 1:m, 1:n) - spread(conmat(m_lcon + 1:m, n + 1), dim=2, ncopies=n), simi))
+    ! A(:, m_lcon + 1:m) = transpose(matprod(conmat(m_lcon + 1:m, 1:n) - spread(conmat(m_lcon + 1:m, n + 1), dim=2, ncopies=n), simi))
     !!MATLAB: A(:, m_lcon+1:m) = simi'*(conmat(m_lcon+1:m, 1:n) - conmat(m_lcon+1:m, n+1))' % Implicit expansion for subtraction
 
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
@@ -393,7 +393,7 @@ do tr = 1, maxtr
             cstrv = cval(j)
         else
             ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-            call evaluate(calcfc_internal, x, f, constr)
+            ! call evaluate(calcfc_internal, x, f, constr)
             cstrv = maximum([ZERO, constr])
             nf = nf + 1_IK
             ! Save X, F, CONSTR, CSTRV into the history.
@@ -585,7 +585,7 @@ do tr = 1, maxtr
             cstrv = cval(j)
         else
             ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-            call evaluate(calcfc_internal, x, f, constr)
+            ! call evaluate(calcfc_internal, x, f, constr)
             cstrv = maximum([ZERO, constr])
             nf = nf + 1_IK
             ! Save X, F, CONSTR, CSTRV into the history.
@@ -650,7 +650,7 @@ end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 ! Ensure that D has not been updated after SHORTD == TRUE occurred, or the code below is incorrect.
 x = sim(:, n + 1) + d
 if (info == SMALL_TR_RADIUS .and. shortd .and. norm(x - sim(:, n + 1)) > 1.0E-3_RP * rhoend .and. nf < maxfun) then
-    call evaluate(calcfc_internal, x, f, constr)
+    ! call evaluate(calcfc_internal, x, f, constr)
     cstrv = maximum([ZERO, constr])
     nf = nf + 1_IK
     ! Save X, F, CONSTR, CSTRV into the history.
@@ -842,7 +842,7 @@ do iter = 1, n + 1_IK
     ! Calculate the linear approximations to the objective and constraint functions.
     g = matprod(fval(1:n) - fval(n + 1), simi)
     A(:, 1:m_lcon) = amat
-    A(:, m_lcon + 1:m) = transpose(matprod(conmat(m_lcon + 1:m, 1:n) - spread(conmat(m_lcon + 1:m, n + 1), dim=2, ncopies=n), simi))
+    ! A(:, m_lcon + 1:m) = transpose(matprod(conmat(m_lcon + 1:m, 1:n) - spread(conmat(m_lcon + 1:m, n + 1), dim=2, ncopies=n), simi))
     !!MATLAB: A(:, m_lcon+1:m) = simi'*(conmat(m_lcon+1:m, 1:n) - conmat(m_lcon+1:m, n+1))' % Implicit expansion for subtraction
 
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.

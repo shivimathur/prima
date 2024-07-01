@@ -45,7 +45,7 @@ subroutine initxf(calfun, iprint, maxfun, Aeq, Aineq, amat, beq, bineq, ctol, ft
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, EPS, TEN, MAXPOW10, REALMAX, BOUNDMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: evaluate_mod, only : evaluate
+! use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT
@@ -102,6 +102,7 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: subinfo
+integer(IK) :: slice_size, i
 integer(IK), allocatable :: ixl(:)
 integer(IK), allocatable :: ixu(:)
 logical :: feasible(size(xpt, 2))
@@ -110,6 +111,7 @@ real(RP) :: constr_leq(size(beq))
 real(RP) :: cstrv
 real(RP) :: f
 real(RP) :: x(size(x0))
+real, dimension(:, :), allocatable :: temp1, temp2
 
 ! Sizes.
 m = int(size(b), kind(m))
@@ -119,6 +121,7 @@ maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
 maxchist = int(size(chist), kind(maxchist))
 maxhist = int(max(maxxhist, maxfhist, maxchist), kind(maxhist))
+slice_size = npt - (2 * n + 1)
 
 ! Preconditions
 if (DEBUGGING) then
@@ -186,7 +189,15 @@ ij = setij(n, npt)
 ! Set XPT(:, 2*N + 2 : NPT).
 ! Indeed, XPT(:, K) has only two nonzeros for each K >= 2*N + 2,
 ! N.B.: The 1 in IJ + 1 comes from the fact that XPT(:, 1) corresponds to XBASE.
-xpt(:, 2 * n + 2:npt) = xpt(:, ij(1, :) + 1) + xpt(:, ij(2, :) + 1)
+! xpt(:, 2 * n + 2:npt) = xpt(:, ij(1, :) + 1) + xpt(:, ij(2, :) + 1)
+allocate(temp1(size(xpt, 1), slice_size))
+allocate(temp2(size(xpt, 1), slice_size))
+
+do i = 1, slice_size
+    temp1(:, i) = xpt(:, ij(1, i) + 1)
+    temp2(:, i) = xpt(:, ij(2, i) + 1)
+end do
+xpt(:, 2 * n + 2:npt) = temp1 + temp2
 
 ! Update the constraint right-hand sides to allow for the shift XBASE.
 b = b - matprod(xbase, amat)
@@ -221,14 +232,14 @@ ixl = trueloc(xl > -BOUNDMAX)
 ixu = trueloc(xu < BOUNDMAX)
 do k = 1, npt
     x = xbase + xpt(:, k)
-    call evaluate(calfun, x, f)
+    ! call evaluate(calfun, x, f)
     ! Evaluate the constraints.
     constr_leq = matprod(Aeq, x) - beq
     constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), -constr_leq, constr_leq, matprod(Aineq, x) - bineq]
     cstrv = maximum([ZERO, constr])
 
     ! Print a message about the function evaluation according to IPRINT.
-    call fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x, cstrv, constr)
+    ! call fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x, cstrv, constr)
     ! Save X, F, CSTRV into the history.
     call savehist(k, x, xhist, f, fhist, cstrv, chist)
 
@@ -251,8 +262,8 @@ nf = int(count(evaluated), kind(nf))
 ! Since the starting point is supposed to be feasible, there should be at least one feasible point.
 ! We set feasible to TRUE for the evaluated point with the smallest constraint violation. This is
 ! necessary, or KOPT defined below may become 0 if EVALUATED .AND. FEASIBLE is all FALSE.
-feasible(minloc(cval, mask=evaluated, dim=1)) = .true.
-kopt = int(minloc(fval, mask=(evaluated .and. feasible), dim=1), kind(kopt))
+! feasible(minloc(cval, mask=evaluated, dim=1)) = .true.
+! kopt = int(minloc(fval, mask=(evaluated .and. feasible), dim=1), kind(kopt))
 !!MATLAB:
 !!fopt = min(fval(evaluated & feasible));
 !!kopt = find(evaluated & feasible & ~(fval > fopt), 1, 'first');

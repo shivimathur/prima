@@ -16,7 +16,7 @@ subroutine cobyla_c(m_nlcon, cobjcon_ptr, data_ptr, n, x, f, cstrv, nlconstr, m_
     & xl, xu, f0, nlconstr0, nf, rhobeg, rhoend, ftarget, maxfun, iprint, ctol, callback_ptr, info) bind(C)
 use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR, C_ASSOCIATED, C_F_PROCPOINTER, C_F_POINTER
 use, non_intrinsic :: cintrf_mod, only : COBJCON, CCALLBACK
-use, non_intrinsic :: cobyla_mod, only : cobyla
+! use, non_intrinsic :: cobyla_mod, only : cobyla
 use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: memory_mod, only : safealloc
@@ -139,15 +139,15 @@ if (c_associated(callback_ptr)) then
     ! that pointer in the closure below.
     call c_f_procpointer(callback_ptr, cb_ptr)
     ! We then provide the closure to the algorithm.
-    call cobyla(calcfc, m_nlcon_loc, x_loc, f_loc, cstrv=cstrv_loc, nlconstr=nlconstr_loc, Aineq=Aineq_loc, &
-        & bineq=bineq_loc, Aeq=Aeq_loc, beq=beq_loc, xl=xl_loc, xu=xu_loc, f0=f0_loc, nlconstr0=nlconstr0_loc, &
-        & nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, ftarget=ftarget_loc, ctol=ctol_loc, maxfun=maxfun_loc, &
-        & iprint=iprint_loc, callback_fcn=callback_fcn, info=info_loc)
+    ! call cobyla(calcfc, m_nlcon_loc, x_loc, f_loc, cstrv=cstrv_loc, nlconstr=nlconstr_loc, Aineq=Aineq_loc, &
+    !     & bineq=bineq_loc, Aeq=Aeq_loc, beq=beq_loc, xl=xl_loc, xu=xu_loc, f0=f0_loc, nlconstr0=nlconstr0_loc, &
+    !     & nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, ftarget=ftarget_loc, ctol=ctol_loc, maxfun=maxfun_loc, &
+    !     & iprint=iprint_loc, callback_fcn=callback_fcn, info=info_loc)
 else
-    call cobyla(calcfc, m_nlcon_loc, x_loc, f_loc, cstrv=cstrv_loc, nlconstr=nlconstr_loc, Aineq=Aineq_loc, &
-        & bineq=bineq_loc, Aeq=Aeq_loc, beq=beq_loc, xl=xl_loc, xu=xu_loc, f0=f0_loc, nlconstr0=nlconstr0_loc, &
-        & nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, ftarget=ftarget_loc, ctol=ctol_loc, maxfun=maxfun_loc, &
-        & iprint=iprint_loc, info=info_loc)
+    ! call cobyla(calcfc, m_nlcon_loc, x_loc, f_loc, cstrv=cstrv_loc, nlconstr=nlconstr_loc, Aineq=Aineq_loc, &
+    !     & bineq=bineq_loc, Aeq=Aeq_loc, beq=beq_loc, xl=xl_loc, xu=xu_loc, f0=f0_loc, nlconstr0=nlconstr0_loc, &
+    !     & nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, ftarget=ftarget_loc, ctol=ctol_loc, maxfun=maxfun_loc, &
+    !     & iprint=iprint_loc, info=info_loc)
 end if
 
 ! Write the outputs

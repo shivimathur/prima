@@ -47,11 +47,11 @@ subroutine uobyqb(calfun, iprint, maxfun, eta1, eta2, ftarget, gamma1, gamma2, r
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: evaluate_mod, only : evaluate
+! use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED, CALLBACK_TERMINATE, NAN_INF_MODEL
-use, non_intrinsic :: linalg_mod, only : vec2smat, smat_mul_vec, norm
+! use, non_intrinsic :: linalg_mod, only : vec2smat, smat_mul_vec, norm
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: message_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ, CALLBACK
@@ -62,7 +62,7 @@ use, non_intrinsic :: shiftbase_mod, only : shiftbase
 
 ! Solver-specific modules
 use, non_intrinsic :: geometry_uobyqa_mod, only : geostep, setdrop_tr
-use, non_intrinsic :: initialize_uobyqa_mod, only : initxf, initq, initl
+! use, non_intrinsic :: initialize_uobyqa_mod, only : initxf, initq, initl
 use, non_intrinsic :: trustregion_uobyqa_mod, only : trstep, trrad
 use, non_intrinsic :: update_uobyqa_mod, only : update
 
@@ -168,12 +168,12 @@ end if
 !====================!
 
 ! Initialize XBASE, XPT, FVAL, and KOPT, together with the history and NF.
-call initxf(calfun, iprint, maxfun, ftarget, rhobeg, x, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
+! call initxf(calfun, iprint, maxfun, ftarget, rhobeg, x, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
 
 ! Report the current best value, and check if user asks for early termination.
 terminate = .false.
 if (present(callback_fcn)) then
-    call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0_IK, terminate=terminate)
+    ! call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0_IK, terminate=terminate)
     if (terminate) then
         subinfo = CALLBACK_TERMINATE
     end if
@@ -192,10 +192,10 @@ if (subinfo == INFO_DFT) then
     ! SAFEALLOC fails, an informative error will be raised, which is preferred to a silent or
     ! ambiguous failure.
     call safealloc(pl, npt - 1_IK, npt)
-    call initl(xpt, pl)
+    ! call initl(xpt, pl)
 
     ! Initialize the quadratic model represented by PQ.
-    call initq(fval, xpt, pq)
+    ! call initq(fval, xpt, pq)
     if (.not. (all(is_finite(pq)))) then
         subinfo = NAN_INF_MODEL
     end if
@@ -272,7 +272,7 @@ do tr = 1, maxtr
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT? It affects IMPROVE_GEO, REDUCE_RHO.
     ! N.B. (Zaikun 20240331): In Powell's algorithms, CLOSE_ITPSET is defined after XPT is updated
     ! according to the trust-region trial step.
-    distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+    ! distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
     close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Powell's NEWUOA code.
     ! Below are some alternative definitions of CLOSE_ITPSET.
@@ -282,10 +282,10 @@ do tr = 1, maxtr
     ! !close_itpset = all(distsq <= max(delta**2, 4.0_RP * rho**2))  ! Powell's LINCOA code.
 
     ! Generate trust region step D, and also calculate a lower bound on the Hessian of Q.
-    g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xpt(:, kopt))
-    h = vec2smat(pq(n + 1:npt - 1))
+    ! g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xpt(:, kopt))
+    ! h = vec2smat(pq(n + 1:npt - 1))
     call trstep(delta, g, h, trtol, d, crvmin)
-    dnorm = min(delta, norm(d))
+    ! dnorm = min(delta, norm(d))
 
     ! Check whether D is too short to invoke a function evaluation.
     shortd = (dnorm <= HALF * rho)  ! `<=` works better than `<` in case of underflow.
@@ -313,7 +313,7 @@ do tr = 1, maxtr
             f = fval(k)
         else
             ! Evaluate the objective function at X, taking care of possible Inf/NaN values.
-            call evaluate(calfun, x, f)
+            ! call evaluate(calfun, x, f)
             nf = nf + 1_IK
             ! Save X and F into the history.
             call savehist(nf, x, xhist, f, fhist)
@@ -452,7 +452,7 @@ do tr = 1, maxtr
     ! Improve the geometry of the interpolation set by removing a point and adding a new one.
     if (improve_geo) then
         ! XPT(:, KNEW_GEO) will become XOPT + D below. KNEW_GEO /= KOPT unless there is a bug.
-        distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+        ! distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
         !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
 
@@ -477,7 +477,7 @@ do tr = 1, maxtr
             f = fval(k)
         else
             ! Evaluate the objective function at X, taking care of possible Inf/NaN values.
-            call evaluate(calfun, x, f)
+            ! call evaluate(calfun, x, f)
             nf = nf + 1_IK
             ! Save X and F into the history.
             call savehist(nf, x, xhist, f, fhist)
@@ -488,7 +488,7 @@ do tr = 1, maxtr
 
         ! Update DNORM_REC and MODERR_REC.
         ! DNORM_REC records the DNORM of the recent function evaluations with the current RHO.
-        dnorm = min(delbar, norm(d))   ! In theory, DNORM = DELBAR in this case.
+        ! dnorm = min(delbar, norm(d))   ! In theory, DNORM = DELBAR in this case.
         dnorm_rec = [dnorm_rec(2:size(dnorm_rec)), dnorm]
         ! MODERR is the error of the current model in predicting the change in F due to D.
         ! MODERR_REC records the prediction errors of the recent models with the current RHO.
@@ -536,7 +536,7 @@ do tr = 1, maxtr
 
     ! Report the current best value, and check if user asks for early termination.
     if (present(callback_fcn)) then
-        call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, terminate=terminate)
+        ! call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, terminate=terminate)
         if (terminate) then
             info = CALLBACK_TERMINATE
             exit
@@ -551,19 +551,19 @@ deallocate (pl)
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried yet.
 ! Ensure that D has not been updated after SHORTD == TRUE occurred, or the code below is incorrect.
 x = xbase + (xpt(:, kopt) + d)
-if (info == SMALL_TR_RADIUS .and. shortd .and. norm(x - (xbase + xpt(:, kopt))) > TENTH * rhoend .and. nf < maxfun) then
-    call evaluate(calfun, x, f)
-    nf = nf + 1_IK
-    ! Save X, F into the history.
-    call savehist(nf, x, xhist, f, fhist)
-    ! Print a message about the function evaluation according to IPRINT.
-    ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
-    call fmsg(solver, 'Trust region', iprint, nf, rho, f, x)
-    if (f < fval(kopt)) then
-        xpt(:, kopt) = xpt(:, kopt) + d
-        fval(kopt) = f
-    end if
-end if
+! if (info == SMALL_TR_RADIUS .and. shortd .and. norm(x - (xbase + xpt(:, kopt))) > TENTH * rhoend .and. nf < maxfun) then
+!     call evaluate(calfun, x, f)
+!     nf = nf + 1_IK
+!     ! Save X, F into the history.
+!     call savehist(nf, x, xhist, f, fhist)
+!     ! Print a message about the function evaluation according to IPRINT.
+!     ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
+!     call fmsg(solver, 'Trust region', iprint, nf, rho, f, x)
+!     if (f < fval(kopt)) then
+!         xpt(:, kopt) = xpt(:, kopt) + d
+!         fval(kopt) = f
+!     end if
+! end if
 
 ! Choose the [X, F] to return.
 x = xbase + xpt(:, kopt)

@@ -755,12 +755,15 @@ else
         B(:, i) = (Q(:, i) - matprod(B(:, i + 1:n), R(i + 1:n, i))) / R(i, i)
     end do
     InvP(P) = linspace(1_IK, n, n) ! The inverse permutation
-    B = transpose(B(:, InvP))
+    do i = 1, n
+        B(:, i) = B(:, InvP(i))
+    end do
+    B = transpose(B)
 end if
 
-!====================!
+! ====================!
 !  Calculation ends  !
-!====================!
+! ====================!
 
 ! Postconditions
 if (DEBUGGING) then
@@ -2115,6 +2118,7 @@ character(len=:), allocatable :: direction_loc
 integer :: dim_loc
 integer(IK) :: i
 integer(IK) :: n
+integer(IK), allocatable :: temp(:)
 
 !====================!
 ! Calculation starts !
@@ -2133,11 +2137,15 @@ end if
 y = x
 if (dim_loc == 1) then
     do i = 1, int(size(x, 2), IK)
-        y(:, i) = sort_i1(y(:, i), direction_loc)
+        temp = y(:, i)
+        y(:, i) = sort_i1(temp, direction_loc)
+        !   y(:, i) = sort_i1(y(:, i), direction_loc)
     end do
 else
     do i = 1, int(size(x, 1), IK)
-        y(i, :) = sort_i1(y(i, :), direction_loc)
+        temp = y(i, :)
+        y(i, :) = sort_i1(temp, direction_loc)
+        ! y(i, :) = sort_i1(y(i, :), direction_loc)
     end do
 end if
 
@@ -2205,6 +2213,8 @@ integer(IK), allocatable :: loc(:) ! INTEGER(IK) :: LOC(COUNT(X)) does not work 
 ! Local variables
 character(len=*), parameter :: srname = 'TRUELOC'
 integer(IK) :: n
+logical, save:: all_true = .TRUE.
+integer :: i
 
 !====================!
 ! Calculation starts !
@@ -2222,7 +2232,17 @@ loc = pack(linspace(1_IK, n, n), mask=x)
 if (DEBUGGING) then
     call assert(all(loc >= 1 .and. loc <= n), '1 <= LOC <= N', srname)
     call assert(size(loc) == count(x), 'SIZE(LOC) == COUNT(X)', srname)
-    call assert(all(x(loc)), 'X(LOC) is all TRUE', srname)
+
+    do i = 1, size(loc)
+      if (.not. x(loc(i))) then
+        all_true = .FALSE.  ! Set to FALSE if any element is not TRUE
+        exit
+      end if
+    end do
+
+    call assert(all_true, 'X(LOC) is all TRUE', srname)
+
+    !call assert(all(x(loc)), 'X(LOC) is all TRUE', srname)
     call assert(all(loc(2:size(loc)) > loc(1:size(loc) - 1)), 'LOC is strictly ascending', srname)
 end if
 end function trueloc
@@ -2243,6 +2263,8 @@ logical, intent(in) :: x(:)
 integer(IK), allocatable :: loc(:) ! INTEGER(IK) :: LOC(COUNT(.NOT.X)) does not work with Absoft 22.0
 ! Local variables
 character(len=*), parameter :: srname = 'FALSELOC'
+logical, save:: any_true = .FALSE.
+integer :: i
 
 !====================!
 ! Calculation starts !
@@ -2259,7 +2281,19 @@ loc = trueloc(.not. x)
 if (DEBUGGING) then
     call assert(all(loc >= 1 .and. loc <= size(x)), '1 <= LOC <= N', srname)
     call assert(size(loc) == size(x) - count(x), 'SIZE(LOC) == SIZE(X) - COUNT(X)', srname)
-    call assert(all(.not. x(loc)), 'X(LOC) is all FALSE', srname)
+
+    do i = 1, size(loc)
+    if (.not. x(loc(i))) then
+        any_true = .TRUE.
+        exit
+    end if
+    end do
+
+    if (.not. any_true) then
+    call assert(.FALSE., 'X(LOC) is all FALSE', srname)
+    end if
+
+    ! call assert(all(.not. x(loc)), 'X(LOC) is all FALSE', srname)
     call assert(all(loc(2:size(loc)) > loc(1:size(loc) - 1)), 'LOC is strictly ascending', srname)
 end if
 end function falseloc
